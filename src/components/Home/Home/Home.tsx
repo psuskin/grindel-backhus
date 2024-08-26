@@ -58,7 +58,7 @@ const Home = () => {
         {/* CTA Button */}
         <div className="mt-10">
           <Link
-            href="/shop"
+            href="/menu"
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition duration-150 ease-in-out"
           >
             To the Catering Shop

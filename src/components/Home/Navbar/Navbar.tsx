@@ -2,6 +2,11 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { getCartAsync } from "@/redux/thunk";
 
 interface NavItemProps {
   title: string;
@@ -117,6 +122,41 @@ const NavItem: React.FC<NavItemProps> = ({ title, items }) => {
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const dispatch = useAppDispatch();
+
+  // Use RootState to type the state parameter
+  const cartItems = useSelector((state: RootState) => state.cartItems);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      await dispatch(getCartAsync());
+      setLoading(false);
+    };
+    fetchData();
+  }, [dispatch]);
+
+  const getTotalItems = (): number => {
+    if (!cartItems) return 0;
+
+    return cartItems.reduce((total: number, item) => {
+      const quantity = Number(item.quantity);
+      return total + (isNaN(quantity) ? 0 : quantity);
+    }, 0);
+  };
+
+  const getTotalPrice = (): string => {
+    if (!cartItems) return "0.00";
+
+    const totalPrice = cartItems.reduce((total: number, item) => {
+      const price = parseFloat(item.price?.replace("€", "").replace(",", ".")); 
+      const quantity = Number(item.quantity);
+      return total + (isNaN(price) || isNaN(quantity) ? 0 : price * quantity);
+    }, 0);
+
+    return totalPrice.toFixed(2);
+  };
 
   return (
     <nav className="bg-white shadow-md fixed top-0 w-full z-50">
@@ -163,10 +203,19 @@ const Navbar = () => {
             </button>
             <Link
               href="/cart"
-              className="ml-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150"
+              className="ml-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-2xl text-sm font-medium transition-colors duration-150 flex items-center"
             >
-              Warenkorb
+              <ShoppingCart className="mr-2" />
+              {loading ? (
+                <span className="mr-2">Loading...</span>
+              ) : (
+                <>
+                  <span className="mr-2">{getTotalItems()} | </span>
+                  <span>{getTotalPrice()} €</span>
+                </>
+              )}
             </Link>
+
             <div className="md:hidden ml-4">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
