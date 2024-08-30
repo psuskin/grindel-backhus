@@ -19,13 +19,13 @@ interface CartItem {
     product_id: number;
     quantity: number;
     price: string;
-    // Add other properties as needed
+  
 }
 
 interface Restaurant {
     id: number;
     name: string;
-    // Add other properties as needed
+   
 }
 
 interface CartState {
@@ -47,15 +47,23 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
         case ADD_TO_CART:
         case ADD_MAIN_PRODUCT:
         case ADD_QUANTITY:
-        case EDIT_PRODUCT:
         case UPDATE_CART_DATA:
         case DELETE_FROM_CART:
             return {
                 ...state,
                 cartItems: Array.isArray(action.payload)
-                    ? action.payload as unknown as CartItem[]
-                    : action.payload ? [action.payload as unknown as CartItem]
+                    ? (action.payload as unknown as CartItem[])
+                    : action.payload ? [(action.payload as unknown as CartItem)]
                         : null,
+            };
+        case EDIT_PRODUCT:
+            return {
+                ...state,
+                cartItems: state.cartItems ? state.cartItems.map(item =>
+                    item.product_id === action.payload.product_id
+                        ? { ...item, ...action.payload }
+                        : item
+                ) : null,
             };
         case SET_SELECTED_CITY:
             return {
@@ -80,7 +88,10 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
         case GET_CART_SUCCESS:
             return {
                 ...state,
-                cartItems: action.payload as unknown as CartItem[],
+                cartItems: action.payload.map((item: any) => ({
+                    ...item,
+                    price: item.price || 0, 
+                })),
             };
 
         default:

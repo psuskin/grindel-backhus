@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,7 +26,6 @@ const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const [totalPrice, setTotalPrice] = useState<string>("0.00");
-  const [cartData, setCartData] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -43,7 +42,6 @@ const Cart: React.FC = () => {
 
   useEffect(() => {
     if (Array.isArray(cartDataFromRedux)) {
-      setCartData(cartDataFromRedux);
       const total = cartDataFromRedux.reduce(
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
@@ -67,7 +65,7 @@ const Cart: React.FC = () => {
             Your Shopping Cart
           </h1>
 
-          {cartData.length === 0 ? (
+          {cartDataFromRedux.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -96,7 +94,7 @@ const Cart: React.FC = () => {
                 <div className="text-right">Action</div>
               </div>
               <AnimatePresence>
-                {cartData.map((item) => (
+                {cartDataFromRedux.map((item) => (
                   <ProductItem key={item.product_id} product={item} />
                 ))}
               </AnimatePresence>

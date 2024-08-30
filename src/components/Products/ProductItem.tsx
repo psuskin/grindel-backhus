@@ -1,17 +1,19 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { editProductAsyncData, DeleteFromCartAsync } from "../../redux/thunk";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { TrashIcon } from "lucide-react";
 
 interface ProductItemProps {
-  product_id: number;
-  name: string;
-  thumb: string;
-  price: string;
-  quantity: number;
-  leadTime?: string;
+  product: {
+    product_id: number;
+    name: string;
+    thumb: string;
+    price: string;
+    quantity: number;
+    leadTime?: string;
+  };
 }
 
 const ProductItem = ({ product }: { product: any }) => {
@@ -42,23 +44,37 @@ const ProductItem = ({ product }: { product: any }) => {
   const handleRemove = () => {
     dispatch(DeleteFromCartAsync(product));
   };
+
+  const totalPrice = useMemo(() => {
+    const price = parseFloat(product.price);
+    const quantity = Number(product.quantity);
+    return !isNaN(price) && !isNaN(quantity)
+      ? (price * quantity).toFixed(2)
+      : '0.00';
+  }, [product.price, product.quantity]);
+
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
       className="grid grid-cols-4 md:grid-cols-5 gap-4 items-center py-4 border-b border-gray-200"
     >
       <div className="col-span-2 flex items-center space-x-4">
-        <div className="relative w-16 h-16 md:w-20 md:h-20 overflow-hidden rounded-lg">
+        <motion.div 
+          className="relative w-16 h-16 md:w-20 md:h-20 overflow-hidden rounded-lg"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.2 }}
+        >
           <Image
             src={product?.thumb || "/images/placeholder.png"}
             alt={product.name}
             layout="fill"
             objectFit="cover"
           />
-        </div>
+        </motion.div>
         <div>
           <h3 className="font-semibold text-sm md:text-lg text-gray-800">
             {product.name}
@@ -74,7 +90,11 @@ const ProductItem = ({ product }: { product: any }) => {
         <p className="font-medium text-gray-800">{product.price}</p>
       </div>
       <div className="flex items-center justify-center">
-        <div className="flex items-center bg-green-100 rounded-full p-1">
+        <motion.div 
+          className="flex items-center bg-green-100 rounded-full p-1"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.2 }}
+        >
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleDecrement}
@@ -82,7 +102,18 @@ const ProductItem = ({ product }: { product: any }) => {
           >
             -
           </motion.button>
-          <span className="mx-3 font-medium">{product.quantity}</span>
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={product.quantity}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="mx-3 font-medium"
+            >
+              {product.quantity}
+            </motion.span>
+          </AnimatePresence>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleIncrement}
@@ -90,14 +121,23 @@ const ProductItem = ({ product }: { product: any }) => {
           >
             +
           </motion.button>
-        </div>
+        </motion.div>
       </div>
       <div className="flex items-center justify-end space-x-2">
-        <p className="hidden md:block font-semibold text-md md:text-lg text-gray-800">
-          {(parseFloat(product.price) * product.quantity).toFixed(2)}
-        </p>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={totalPrice}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="hidden md:block font-semibold text-md md:text-lg text-gray-800"
+          >
+            {totalPrice}
+          </motion.p>
+        </AnimatePresence>
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleRemove}
           className="text-red-500 hover:text-red-600 transition-colors"
@@ -109,4 +149,4 @@ const ProductItem = ({ product }: { product: any }) => {
   );
 };
 
-export default ProductItem;
+export default React.memo(ProductItem);

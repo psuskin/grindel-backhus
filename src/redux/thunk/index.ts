@@ -58,7 +58,7 @@ export const addMainProductToAsync = (item: CartItem): ThunkResult<void> => {
         quantity: item.quantity,
       });
       dispatch(addToMainProduct(response.data));
-      dispatch(getCartAsync()); 
+      dispatch(getCartAsync());
     } catch (error) {
       console.error("Add main product error", error);
     }
@@ -70,7 +70,7 @@ export const editProductAsyncData = (item: CartItem): ThunkResult<void> => {
     try {
       const response = await axios.post("/api/edit-product", {
         id: item.cart_id,
-        quantity: Number(item.quantity), 
+        quantity: Number(item.quantity),
       });
 
       dispatch(editProductAction(response.data));
@@ -117,9 +117,9 @@ export const subtractFromCartAsync = (item: CartItem): ThunkResult<void> => {
 export const DeleteFromCartAsync = (item: CartItem): ThunkResult<void> => {
   return async (dispatch) => {
     try {
-      const response = await axios.post("/api/edit-product", {
+      const response = await axios.post("/api/remove-product", {
         id: item.cart_id,
-        quantity: 0,
+        quantity: 0  // Add this line
       });
       dispatch(deleteFromCart(response.data));
       dispatch(getCartAsync());
@@ -158,7 +158,7 @@ export const getCartAsync = (): ThunkResult<void> => {
         products: updatedContents,
       };
 
-      dispatch(getCartSuccess(updatedData.products)); 
+      dispatch(getCartSuccess(updatedData.products));
     } catch (err) {
       console.error("GET CART ERROR", err);
     }
