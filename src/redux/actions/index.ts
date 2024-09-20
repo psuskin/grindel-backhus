@@ -13,12 +13,18 @@ export const SET_SELECTED_CITY = "SET_SELECTED_CITY";
 export const SET_SELECTED_DELIVERY_METHOD = "SET_SELECTED_DELIVERY_METHOD";
 export const SET_SELECTED_RESTAURANT = "SET_SELECTED_RESTAURANT";
 
-// Define types for your actions
+export const GET_PACKAGES_SUCCESS = "GET_PACKAGES_SUCCESS";
+export const GET_PRODUCTS_BY_CATEGORY_SUCCESS = "GET_PRODUCTS_BY_CATEGORY_SUCCESS";
+export const GET_PRODUCT_BY_ID_SUCCESS = "GET_PRODUCT_BY_ID_SUCCESS";
+export const SET_LOADING = "SET_LOADING";
+export const RESET_PRODUCTS = "RESET_PRODUCTS";
+export const SET_ACTIVE_CATEGORY_NAME = "SET_ACTIVE_CATEGORY_NAME";
+
 export interface CartItem {
-    addedExtras: any;
+    addedExtras?: any;
     product_id: number;
     quantity: number;
-   
+
 }
 
 interface Restaurant {
@@ -52,9 +58,9 @@ export const subtractFromCart = (item: CartItem) => ({
     payload: item,
 });
 
-export const getCartSuccess = (cartItems: CartItem[]) => ({
-    type: GET_CART_SUCCESS as typeof GET_CART_SUCCESS,
-    payload: cartItems,
+export const getCartSuccess = (cartData: any) => ({
+    type: GET_CART_SUCCESS,
+    payload: cartData,
 });
 
 export const deleteFromCart = (item: CartItem) => ({
@@ -82,7 +88,36 @@ export const setSelectedRestaurant = (selectedRestaurant: Restaurant) => ({
     payload: selectedRestaurant,
 });
 
-// Define a union type for all possible action types
+// Add these new action creators
+export const getPackagesSuccess = (packages: any[]) => ({
+    type: GET_PACKAGES_SUCCESS as typeof GET_PACKAGES_SUCCESS,
+    payload: packages,
+});
+
+export const getProductsByCategorySuccess = (products: any[]) => ({
+    type: GET_PRODUCTS_BY_CATEGORY_SUCCESS as typeof GET_PRODUCTS_BY_CATEGORY_SUCCESS,
+    payload: products,
+});
+
+export const getProductByIdSuccess = (product: any) => ({
+    type: GET_PRODUCT_BY_ID_SUCCESS as typeof GET_PRODUCT_BY_ID_SUCCESS,
+    payload: product,
+});
+
+export const setLoading = (isLoading: boolean) => ({
+    type: SET_LOADING as typeof SET_LOADING,
+    payload: isLoading,
+});
+
+export const resetProducts = () => ({
+    type: 'RESET_PRODUCTS' as const,
+});
+
+export const setActiveCategoryName = (name: string) => ({
+    type: SET_ACTIVE_CATEGORY_NAME,
+    payload: name
+});
+// Update the CartActionTypes union type
 export type CartActionTypes =
     | ReturnType<typeof addToCart>
     | ReturnType<typeof addToMainProduct>
@@ -94,4 +129,36 @@ export type CartActionTypes =
     | ReturnType<typeof updateCartData>
     | ReturnType<typeof setSelectedCity>
     | ReturnType<typeof setSelectedDeliveryMethod>
-    | ReturnType<typeof setSelectedRestaurant>;
+    | ReturnType<typeof setSelectedRestaurant>
+    | ReturnType<typeof getPackagesSuccess>
+    | ReturnType<typeof getProductsByCategorySuccess>
+    | ReturnType<typeof getProductByIdSuccess>
+    | ReturnType<typeof setLoading>
+    | ReturnType<typeof resetProducts>
+    | ReturnType<typeof setActiveCategoryName>
+export interface CartData {
+    products: CartItem[];
+    cart: {
+        [x: string]: any;
+        menu: {
+            name: string;
+            id: number;
+            contents: Array<{
+                name: string;
+                ids: number[];
+                count: number;
+            }>;
+        };
+        category: {
+            id: string;
+            title: string;
+        };
+        selectedProduct: any | null;
+    };
+    vouchers: any[];
+    totals: Array<{
+        title: string;
+        text: string;
+    }>;
+    shipping_required: boolean;
+}

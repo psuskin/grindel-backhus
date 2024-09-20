@@ -1,140 +1,108 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Leaf, Users } from "lucide-react";
+
+import { getPackagesAsync } from "@/redux/thunk";
+import Loading from "@/components/Loading";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 
 interface MenuItemProps {
-  title: string;
-  description: string;
-  items: number;
-  dishes: number;
+  name: string;
+  id: number;
   price: number;
-  isBestseller?: boolean;
-  imageSrc: string;
+  minimumClients: number;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({
-  title,
-  description,
-  items,
-  dishes,
+  name,
+  id,
   price,
-  isBestseller,
-  imageSrc,
+  minimumClients,
 }) => (
-  <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
-    {isBestseller && (
-      <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-        Bestseller
-      </div>
-    )}
-    <div className="h-48">
+  <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl border border-green-100">
+    <div className="relative h-56">
       <Image
-        src={imageSrc}
-        alt={title}
-        width={500}
-        height={500}
+        src="/images/menu.jpg"
+        alt={name}
+        layout="fill"
         objectFit="cover"
+        className="transition-transform duration-300 group-hover:scale-105"
       />
-      <div className="flex items-center justify-center">
-        <h3 className="text-2xl font-bold text-white">{title}</h3>
+      <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+      <div className="absolute bottom-4 left-4 right-4">
+        <h3 className="text-2xl font-bold text-white">{name}</h3>
       </div>
     </div>
     <div className="p-6">
-      <p className="text-sm text-gray-600 mb-4">{description}</p>
-      <ul className="mb-6 space-y-2">
-        <li className="flex items-center">
-          <svg
-            className="w-5 h-5 text-green-600 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 13l4 4L19 7"
-            ></path>
-          </svg>
-          <span className="text-gray-700">{items} Choose finger food</span>
-        </li>
-        <li className="flex items-center">
-          <svg
-            className="w-5 h-5 text-green-600 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 13l4 4L19 7"
-            ></path>
-          </svg>
-          <span className="text-gray-700">{dishes} available dishes</span>
-        </li>
-      </ul>
       <div className="flex justify-between items-end mb-6">
         <div>
-          <div className="text-3xl font-bold text-emerald-600">
+          <div className="text-3xl font-bold text-green-700">
             {price.toFixed(2)} €
           </div>
           <div className="text-sm text-gray-500">per person, plus VAT</div>
         </div>
-        <div className="text-sm text-gray-500">from 15 people</div>
+        <div className="flex items-center text-sm text-gray-500">
+          <Users className="w-4 h-4 mr-1" />
+          Min. {minimumClients} {minimumClients === 1 ? "person" : "people"}
+        </div>
       </div>
       <Link
-        href="/menu/shop"
+        href={`/menu/shop?menu=${id}`}
         className="block w-full bg-green-500 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-600 transition-colors duration-300 text-center"
       >
-        Select dishes
+        Select Package
       </Link>
     </div>
   </div>
 );
 
-const Menu = () => (
-  <div className="max-w-5xl mx-auto px-4 py-10 mt-28">
-    <h1 className="text-5xl font-bold text-center mb-4">Finger food menus</h1>
-    <p className="text-center text-gray-600 mb-2 max-w-2xl mx-auto">
-      Cold finger food snacks served on sustainable disposable plates.
-    </p>
-    <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-      Choose between four, five and six appetizers per person.
-    </p>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-      <MenuItem
-        title="Finger food basic"
-        description="Clear but inexpensive!"
-        items={4}
-        dishes={23}
-        price={14.9}
-        imageSrc="/images/menu.jpg"
-      />
-      <MenuItem
-        title="Finger food classic"
-        description="The standard finger food menu"
-        items={5}
-        dishes={42}
-        price={18.9}
-        isBestseller={true}
-        imageSrc="/images/menu.jpg"
-      />
-      <MenuItem
-        title="Finger food premium"
-        description="Lots of choice for special occasions!"
-        items={6}
-        dishes={53}
-        price={24.9}
-        imageSrc="/images/menu.jpg"
-      />
+const Menu = () => {
+  const dispatch = useAppDispatch();
+  const packages = useAppSelector((state) => state.packages);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      await dispatch(getPackagesAsync());
+      setIsLoading(false);
+    };
+    fetchPackages();
+  }, [dispatch]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  return (
+    <div className="max-w-7xl min-h-screen mx-auto px-4 py-16 mt-28">
+      <h1 className="text-5xl font-bold text-center mb-4 text-gray-800">
+        Catering Packages
+      </h1>
+      <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto text-lg">
+        Choose from our selection of catering packages to suit your event.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        {packages.map((pkg) => (
+          <MenuItem
+            key={pkg.id}
+            name={pkg.name}
+            id={pkg.id}
+            price={pkg.price}
+            minimumClients={pkg.minimumClients}
+          />
+        ))}
+      </div>
+      <div className="bg-green-50 rounded-xl p-8 text-center">
+        <p className="text-gray-700 text-lg max-w-3xl mx-auto">
+          Delivery, assembly, cleaning and collection free of charge, throughout
+          Germany! Drinks, equipment and staff can be booked optionally.
+        </p>
+      </div>
     </div>
-    <p className="text-center text-gray-600 text-sm max-w-3xl mx-auto">
-      Delivery, assembly, cleaning and collection free of charge, throughout
-      Germany! Drinks, equipment and staff can be booked optionally.
-    </p>
-  </div>
-);
+  );
+};
 
 export default Menu;

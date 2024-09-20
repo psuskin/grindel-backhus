@@ -29,9 +29,13 @@ interface Product {
   href: string;
   allergens?: string[];
   preparationTime?: string;
+  menuName?: string;
 }
 
-const ProductDetails: React.FC<{ id: string }> = ({ id }) => {
+const ProductDetails: React.FC<{ id: string; menuName: string | null }> = ({
+  id,
+  menuName,
+}) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,9 +104,11 @@ const ProductDetails: React.FC<{ id: string }> = ({ id }) => {
             <h1 className="text-4xl font-bold mb-4 text-gray-900">
               {selectedProduct.name}
             </h1>
-            <div className="bg-green-600 text-white text-sm font-semibold px-6 py-2 rounded-full inline-block mb-6">
-              Belegt
-            </div>
+            {menuName && (
+              <div className="bg-green-600 text-white text-sm font-semibold px-6 py-2 rounded-full inline-block mb-6">
+                {menuName}
+              </div>
+            )}
             <p className="text-gray-700 mb-8 text-xl leading-relaxed">
               {selectedProduct.description}
             </p>

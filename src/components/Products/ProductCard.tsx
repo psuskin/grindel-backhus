@@ -14,7 +14,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useAppDispatch();
 
   const handleAddToCart = async () => {
-    const toastId = toast.loading("Adding products to the cart...");
+    const toastId = toast.loading("Adding product to the cart...");
     try {
       await dispatch(
         addMainProductToAsync({
@@ -35,7 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="relative aspect-[4/3]">
         <Image
           src={product.thumb}
-          alt={product.name}
+          alt={product?.name}
           width={400}
           height={300}
         />
@@ -49,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           onClick={handleAddToCart}
           className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded w-full"
         >
-          In den Warenkorb
+          Add to Cart
         </button>
       </div>
     </div>

@@ -4,18 +4,15 @@ import { cookies } from "next/headers";
 
 export async function GET(req: NextRequest) {
     try {
-        // Retrieve the session token from cookies
         const cookieStore = cookies();
         const session = cookieStore.get('session')?.value;
 
-        // If there's no session token, return an unauthorized error
         if (!session) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Make a POST request to the backend API to get the cart
         const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_ENDPOINT}/sale/cart`,
+            `${process.env.NEXT_PUBLIC_API_ENDPOINT}/sale/view`,
             {},
             {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -23,11 +20,9 @@ export async function GET(req: NextRequest) {
             }
         );
 
-
-        // Return the response data from the backend API
+        // Ensure we're returning the full cart data
         return NextResponse.json(response.data, { status: 200 });
     } catch (error: unknown) {
-        // Log the error and return a failure response
         console.error("Get Cart Error:", error);
         return NextResponse.json(
             {

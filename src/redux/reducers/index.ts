@@ -1,5 +1,3 @@
-// redux/reducers/index.ts
-
 import {
     ADD_TO_CART,
     SUBTRACT_FROM_CART,
@@ -12,34 +10,61 @@ import {
     SET_SELECTED_CITY,
     SET_SELECTED_DELIVERY_METHOD,
     SET_SELECTED_RESTAURANT,
-    CartActionTypes
+    GET_PACKAGES_SUCCESS,
+    GET_PRODUCTS_BY_CATEGORY_SUCCESS,
+    CartActionTypes,
+    GET_PRODUCT_BY_ID_SUCCESS,
+    SET_LOADING,
+    RESET_PRODUCTS,
+    SET_ACTIVE_CATEGORY_NAME
 } from "../actions";
+import { CartData } from '../actions';
 
 interface CartItem {
     product_id: number;
     quantity: number;
     price: string;
-  
 }
 
 interface Restaurant {
     id: number;
     name: string;
-   
 }
 
-interface CartState {
-    cartItems: CartItem[] | null;
+interface CartState extends CartData {
+    loading: any;
     selectedRestaurant: Restaurant | null;
     selectedCity: string | null;
     selectedDeliveryMethod: string | null;
+    packages: any[];
+    categories: any[];
+    activeCategoryName: string;
 }
 
 const initialState: CartState = {
-    cartItems: null,
+    products: [],
+    cart: {
+        menu: {
+            name: '',
+            id: 0,
+            contents: [],
+        },
+        category: {
+            id: '',
+            title: '',
+        },
+        selectedProduct: null,
+    },
+    vouchers: [],
+    totals: [],
+    shipping_required: false,
     selectedRestaurant: null,
     selectedCity: null,
     selectedDeliveryMethod: null,
+    packages: [],
+    categories: [],
+    loading: false,
+    activeCategoryName: '',
 };
 
 const reducer = (state = initialState, action: CartActionTypes): CartState => {
@@ -51,19 +76,19 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
         case DELETE_FROM_CART:
             return {
                 ...state,
-                cartItems: Array.isArray(action.payload)
-                    ? (action.payload as unknown as CartItem[])
-                    : action.payload ? [(action.payload as unknown as CartItem)]
-                        : null,
+                products: Array.isArray(action.payload)
+                    ? action.payload as unknown as CartItem[]
+                    : action.payload ? [...state.products, action.payload as unknown as CartItem]
+                        : state.products,
             };
         case EDIT_PRODUCT:
             return {
                 ...state,
-                cartItems: state.cartItems ? state.cartItems.map(item =>
+                products: state.products.map(item =>
                     item.product_id === action.payload.product_id
                         ? { ...item, ...action.payload }
                         : item
-                ) : null,
+                ),
             };
         case SET_SELECTED_CITY:
             return {
@@ -82,16 +107,44 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
             };
 
         case SUBTRACT_FROM_CART:
-            // Implement subtraction logic here if needed
-            return state;
+            return {
+                ...state,
+                products: state.products.map(item =>
+                    item.product_id === action.payload.product_id && item.quantity > 1
+                        ? { ...item, quantity: item.quantity - 1 }
+                        : item
+                ),
+            };
 
         case GET_CART_SUCCESS:
             return {
                 ...state,
-                cartItems: action.payload.map((item: any) => ({
-                    ...item,
-                    price: item.price || 0, 
-                })),
+                cart: action.payload,
+            };
+
+        case GET_PACKAGES_SUCCESS:
+            return { ...state, packages: action.payload };
+
+        case GET_PRODUCTS_BY_CATEGORY_SUCCESS:
+            return { ...state, products: action.payload };
+
+        case GET_PRODUCT_BY_ID_SUCCESS:
+            return { ...state, cart: { ...state.cart, selectedProduct: action.payload } };
+
+        case SET_LOADING:
+            return {
+                ...state,
+                loading: action.payload,
+            };
+        case RESET_PRODUCTS:
+            return {
+                ...state,
+                products: [],
+            };
+        case SET_ACTIVE_CATEGORY_NAME:
+            return {
+                ...state,
+                activeCategoryName: action.payload
             };
 
         default:

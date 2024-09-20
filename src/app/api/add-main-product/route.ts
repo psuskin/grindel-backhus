@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Extract product data from the request body
         const { id, quantity } = await req.json();
 
         // Prepare the form data for the POST request

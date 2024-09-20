@@ -1,83 +1,108 @@
+// /menu/shop/page.tsx
+
 "use client";
 
-import { useState } from "react";
-import { MdFilterList } from "react-icons/md";
-import { IoChevronDownOutline } from "react-icons/io5";
-import ProductCard from "@/components/Products/ProductCard";
-
-import { useProductFilters } from "@/hooks/useProductFilters";
-import { FilterSidebar } from "@/components/Products/FilterSidebar";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import axios from "axios";
+import ProductList from "@/components/Products/ProductList";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { getProductsByCategoryAsync } from "@/redux/thunk";
+import { resetProducts, setActiveCategoryName } from "@/redux/actions";
 import Loading from "@/components/Loading";
 
+interface MenuContent {
+  name: string;
+  ids: number[];
+  count: number;
+}
+
 const Shop = () => {
-  const {
-    products,
-    loading,
-    filters,
-    sortBy,
-    handleFilterChange,
-    handleSortChange,
-  } = useProductFilters();
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
- 
+  const [menuContents, setMenuContents] = useState<MenuContent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const menuId = searchParams.get("menu");
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const fetchMenuContent = async () => {
+      if (menuId) {
+        try {
+          const response = await axios.post("/api/get-menu-content", {
+            menu: menuId,
+          });
+          if (response.data.contents) {
+            setMenuContents(response.data.contents);
+            if (
+              response.data.contents.length > 0 &&
+              response.data.contents[0].ids.length > 0
+            ) {
+              const firstCategoryId =
+                response.data.contents[0].ids[0].toString();
+              setActiveCategory(firstCategoryId);
+              dispatch(getProductsByCategoryAsync(firstCategoryId));
+            }
+          } else {
+            setError("No menu contents found");
+          }
+        } catch (error) {
+          console.error("Failed to fetch menu content:", error);
+          setError("Failed to fetch menu content");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchMenuContent();
+
+    return () => {
+      dispatch(resetProducts());
+    };
+  }, [menuId, dispatch]);
+
+  const handleCategoryClick = (categoryId: string, categoryName: string) => {
+    setActiveCategory(categoryId);
+    dispatch(setActiveCategoryName(categoryName));
+    dispatch(getProductsByCategoryAsync(categoryId));
+  };
+
+  if (loading)
+    return (
+      <div>
+        <Loading />
+      </div>
+    );
+  if (error)
+    return <div className="text-red-500 text-center mt-20">{error}</div>;
+
   return (
-    <div className="mt-16 container mx-auto px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mt-10">Our Menu</h1>
-        <button
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="md:hidden flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg"
-        >
-          <MdFilterList size={20} />
-          <span>Filters</span>
-        </button>
+    <div className="mt-20 container mx-auto px-4 min-h-screen pb-20">
+      <div className="overflow-x-auto whitespace-nowrap pb-4 mb-8">
+        <div className="inline-flex space-x-4 mt-10">
+          {menuContents.map((content, index) => (
+            <button
+              key={index}
+              className={`px-6 py-3 rounded-full text-sm font-semibold transition-colors ${
+                activeCategory === content.ids[0].toString()
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+              onClick={() =>
+                handleCategoryClick(content.ids[0].toString(), content.name)
+              }
+            >
+              {content.name}
+            </button>
+          ))}
+        </div>
       </div>
-
-      <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
-        <FilterSidebar
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          isFilterOpen={isFilterOpen}
-        />
-
-        <main className="w-full md:w-3/4">
-          <div className="flex justify-end mb-4">
-            <div className="relative inline-block w-64">
-              <select
-                className="appearance-none w-full px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ease-in-out cursor-pointer"
-                onChange={(e) => handleSortChange(e.target.value)}
-                value={sortBy}
-              >
-                <option value="standard">Standard</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <IoChevronDownOutline className="h-5 w-5" />
-              </div>
-            </div>
-          </div>
-
-          {loading ? (
-            <Loading />
-          ) : products.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.product_id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <h3 className="text-xl font-semibold text-gray-600">
-                No products match your current selection.
-              </h3>
-              <p className="text-gray-500 mt-2">
-                Try adjusting your filters or browse our full menu.
-              </p>
-            </div>
-          )}
-        </main>
-      </div>
+      <ProductList
+        menuContents={menuContents}
+        activeCategory={activeCategory}
+      />
     </div>
   );
 };

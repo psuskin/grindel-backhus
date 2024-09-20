@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +9,7 @@ import { useAppDispatch } from "@/hooks/useAppDispatch";
 import ProductItem from "@/components/Products/ProductItem";
 import { RootState } from "@/redux/store";
 import Loading from "@/components/Loading";
+import { createSelector } from "@reduxjs/toolkit";
 
 interface CartItem {
   product_id: number;
@@ -18,14 +19,22 @@ interface CartItem {
   quantity: number;
   leadTime?: string;
 }
+const selectCartItems = createSelector(
+  (state: RootState) => state.cart?.products,
+  (products) =>
+    products
+      ? products.map((product: { price: string }) => ({
+          ...product,
+          price: parseFloat(product.price || "0"),
+        }))
+      : []
+);
 
 const Cart: React.FC = () => {
-  const cartDataFromRedux = useSelector(
-    (state: RootState) => state.cartItems || []
-  );
+  const cartDataFromRedux = useSelector(selectCartItems);
   const dispatch = useAppDispatch();
 
-  const [totalPrice, setTotalPrice] = useState<string>("0.00");
+  // const [totalPrice, setTotalPrice] = useState<string>("0.00");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -40,14 +49,15 @@ const Cart: React.FC = () => {
     fetchData();
   }, [dispatch]);
 
-  useEffect(() => {
+  const totalPrice = useMemo(() => {
     if (Array.isArray(cartDataFromRedux)) {
       const total = cartDataFromRedux.reduce(
-        (sum, item) => sum + parseFloat(item.price) * item.quantity,
+        (sum, item) => sum + (item.price || 0) * item.quantity,
         0
       );
-      setTotalPrice(total.toFixed(2));
+      return total.toFixed(2);
     }
+    return "0.00";
   }, [cartDataFromRedux]);
 
   if (isLoading) return <Loading />;
@@ -60,7 +70,7 @@ const Cart: React.FC = () => {
         transition={{ duration: 0.5 }}
         className="lg:container w-full mx-auto"
       >
-        <div className="bg-green-50 rounded-2xl shadow-lg p-6 md:p-8">
+        <div className="bg-green-50 rounded-2xl shadow-md p-6 md:p-8">
           <h1 className="text-3xl font-bold mb-8 text-gray-800">
             Your Shopping Cart
           </h1>
@@ -94,9 +104,11 @@ const Cart: React.FC = () => {
                 <div className="text-right">Action</div>
               </div>
               <AnimatePresence>
-                {cartDataFromRedux.map((item) => (
-                  <ProductItem key={item.product_id} product={item} />
-                ))}
+                {cartDataFromRedux.map(
+                  (item: { product_id: React.Key | null | undefined }) => (
+                    <ProductItem key={item.product_id} product={item} />
+                  )
+                )}
               </AnimatePresence>
 
               <motion.div

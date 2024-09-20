@@ -14,7 +14,10 @@ import {
   setSelectedCity,
   setSelectedDeliveryMethod,
   setSelectedRestaurant,
-  CartActionTypes
+  CartActionTypes,
+  getPackagesSuccess,
+  getProductsByCategorySuccess,
+  getProductByIdSuccess
 } from "../actions";
 
 interface CartItem {
@@ -136,7 +139,7 @@ export const getCartAsync = (): ThunkResult<void> => {
     try {
       const response = await axios.get("/api/get-cart");
       const responseData = response.data;
-
+      console.log(responseData);
       const updatedContents = await Promise.all(
         responseData.products.map(async (ele: CartItem) => {
           if (ele && !ele.image) {
@@ -158,7 +161,8 @@ export const getCartAsync = (): ThunkResult<void> => {
         products: updatedContents,
       };
 
-      dispatch(getCartSuccess(updatedData.products));
+      dispatch(getCartSuccess(updatedData));
+
     } catch (err) {
       console.error("GET CART ERROR", err);
     }
@@ -184,6 +188,43 @@ export const setSelectedRestaurantAsync = (selectedRestaurant: Restaurant): Thun
       dispatch(setSelectedRestaurant(selectedRestaurant));
     } catch (error) {
       console.error("Error setting selected restaurant:", error);
+    }
+  };
+};
+
+export const getPackagesAsync = (): ThunkResult<void> => {
+  return async (dispatch) => {
+    try {
+      const response = await axios.get("/api/get-packages");
+      dispatch(getPackagesSuccess(response.data.packages));
+    } catch (error) {
+      console.error("Get packages error", error);
+    }
+  };
+};
+
+export const getProductsByCategoryAsync = (categoryId: string): ThunkResult<void> => {
+  return async (dispatch) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await axios.post("/api/get-products-by-category", { categoryId });
+      dispatch(getProductsByCategorySuccess(response.data.products));
+    } catch (error) {
+      console.error("Get products by category error", error);
+      dispatch(getProductsByCategorySuccess([]));
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+};
+
+export const getProductByIdAsync = (productId: string): ThunkResult<void> => {
+  return async (dispatch) => {
+    try {
+      const response = await axios.post("/api/get-product-by-id", { productId });
+      dispatch(getProductByIdSuccess(response.data.products[0]));
+    } catch (error) {
+      console.error("Get product by ID error", error);
     }
   };
 };
