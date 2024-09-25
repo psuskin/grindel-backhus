@@ -14,19 +14,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useAppDispatch();
 
   const handleAddToCart = async () => {
-    const toastId = toast.loading("Adding product to the cart...");
+
     try {
-      await dispatch(
-        addMainProductToAsync({
-          product_id: product.product_id,
-          quantity: 1,
-        })
-      );
-      toast.success("Product added successfully to the cart", { id: toastId });
+      // Redirect to the product details page
       router.push(`/menu/shop/${product.product_id}`);
     } catch (error) {
-      toast.error("Failed to add product to the cart", { id: toastId });
-      console.error("Add to cart error:", error);
+      toast.error("Failed to redirect to product details",);
+      console.error("Redirect error:", error);
     }
   };
 
