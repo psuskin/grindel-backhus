@@ -19,12 +19,13 @@ export const GET_PRODUCT_BY_ID_SUCCESS = "GET_PRODUCT_BY_ID_SUCCESS";
 export const SET_LOADING = "SET_LOADING";
 export const RESET_PRODUCTS = "RESET_PRODUCTS";
 export const SET_ACTIVE_CATEGORY_NAME = "SET_ACTIVE_CATEGORY_NAME";
+export const UPDATE_PRODUCTS = "UPDATE_PRODUCTS";
 
 export interface CartItem {
-    addedExtras?: any;
     product_id: number;
     quantity: number;
-
+    category_id?: string;
+    addedExtras?: any;
 }
 
 interface Restaurant {
@@ -32,7 +33,7 @@ interface Restaurant {
     name: string;
 }
 
-// Action Creators
+
 export const addToCart = (item: CartItem) => ({
     type: ADD_TO_CART as typeof ADD_TO_CART,
     payload: item,
@@ -117,6 +118,12 @@ export const setActiveCategoryName = (name: string) => ({
     type: SET_ACTIVE_CATEGORY_NAME,
     payload: name
 });
+
+export const updateProducts = (products: any[]) => ({
+    type: UPDATE_PRODUCTS as typeof UPDATE_PRODUCTS,
+    payload: products,
+});
+
 // Update the CartActionTypes union type
 export type CartActionTypes =
     | ReturnType<typeof addToCart>
@@ -136,6 +143,7 @@ export type CartActionTypes =
     | ReturnType<typeof setLoading>
     | ReturnType<typeof resetProducts>
     | ReturnType<typeof setActiveCategoryName>
+    | ReturnType<typeof updateProducts>;
 export interface CartData {
     products: CartItem[];
     cart: {

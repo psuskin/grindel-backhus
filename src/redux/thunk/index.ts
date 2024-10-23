@@ -139,30 +139,25 @@ export const getCartAsync = (): ThunkResult<void> => {
     try {
       const response = await axios.get("/api/get-cart");
       const responseData = response.data;
-      console.log(responseData);
-      const updatedContents = await Promise.all(
-        responseData.products.map(async (ele: CartItem) => {
-          if (ele && !ele.image) {
-            const productResponse = await axios.post("/api/get-product-by-id", {
-              productId: ele.product_id,
-            });
+      console.log("getCartAsync: Received cart data", responseData);
+      
+      if (responseData.cart && responseData.cart.menu && responseData.cart.menu.contents) {
+        responseData.cart.menu.contents = responseData.cart.menu.contents.map((content: any) => {
+          if (content.currentCount === undefined) {
+            const productsInCategory = responseData.products.filter((product: any) =>
+              content.ids.includes(Number(product.product_id))
+            );
+            const calculatedCount = productsInCategory.reduce((sum: number, product: any) => sum + Number(product.quantity), 0);
             return {
-              ...ele,
-              image: productResponse.data.products.thumb,
+              ...content,
+              currentCount: calculatedCount
             };
-          } else {
-            return ele;
           }
-        })
-      );
+          return content;
+        });
+      }
 
-      const updatedData = {
-        ...responseData,
-        products: updatedContents,
-      };
-
-      dispatch(getCartSuccess(updatedData));
-
+      dispatch(getCartSuccess(responseData));
     } catch (err) {
       console.error("GET CART ERROR", err);
     }

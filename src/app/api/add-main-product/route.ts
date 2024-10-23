@@ -3,34 +3,33 @@ import axios from "axios";
 import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
+    const session = cookies().get('session')?.value;
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
-        // Retrieve session from cookies
-        const session = cookies().get("session")?.value;
-
-        // If session is missing, return unauthorized response
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const { id, quantity } = await req.json();
 
-        // Prepare the form data for the POST request
-        const formData = new FormData();
-        formData.append("product_id", id);
-        formData.append("quantity", String(quantity));
+        const url = new URL(process.env.NEXT_PUBLIC_API_ENDPOINT || '');
+        url.searchParams.set('route', 'api/sale/cart.add');
+        url.searchParams.set('api_token', session);
 
-        // Make the POST request to your external API
-        const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_ENDPOINT}/sale/cart.add`,
-            formData,
-            {
-                headers: { "Content-Type": "multipart/form-data" },
-                params: { api_token: session },
-            }
-        );
+        const formData = new URLSearchParams();
+        formData.append('product_id', id);
+        formData.append('quantity', quantity.toString());
 
-        // Return the response data back to the client
-        return NextResponse.json(response.data, { status: 200 });
+        const response = await fetch(url.toString(), {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        return NextResponse.json(data);
     } catch (error) {
         console.error("Add main product error:", error);
         return NextResponse.json(

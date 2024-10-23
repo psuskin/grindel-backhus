@@ -32,6 +32,7 @@ export interface Filters {
 
 export interface Product {
     quantity: ReactNode;
+    cart_id: string;
     product_id: string;
     thumb: string;
     name: string;
@@ -41,7 +42,12 @@ export interface Product {
     tax?: string; // Optional
     minimum?: string; // Optional
     rating?: string; // Optional
-    href: string;
+    href?: string;
     category: string; // Assuming this might be optional based on your context
-    allergenFree?: string[]; // Optional, assuming this is an array of strings
+  category_id?: string;
+  addedExtras?: any;
 }
+export interface CartItem extends Omit<Product, 'cart_id'> {
+    quantity: number;
+    cart_id: string;
+  }

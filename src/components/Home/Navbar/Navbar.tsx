@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Loader2, ShoppingBag, ShoppingCart } from "lucide-react";
+import { Loader2, ShoppingBag } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
@@ -124,7 +124,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const dispatch = useAppDispatch();
-  const cartItems = useSelector((state: RootState) => state.cart?.products);
+  const cartData = useSelector((state: RootState) => state.cart);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,29 +136,19 @@ const Navbar = () => {
   }, [dispatch]);
 
   const getTotalItems = (): number => {
-    if (!cartItems) return 0;
+    if (!cartData.products) return 0;
 
-    return cartItems.reduce((total: number, item: { quantity: any }) => {
+    return cartData.products.reduce((total: number, item: { quantity: any }) => {
       const quantity = Number(item.quantity);
       return total + (isNaN(quantity) ? 0 : quantity);
     }, 0);
   };
 
   const getTotalPrice = (): string => {
-    if (!cartItems) return "0.00";
+    if (!cartData.cart || !cartData.cart.totals) return "0.00";
 
-    const totalPrice = cartItems.reduce(
-      (total: number, item: { price: string; quantity: any }) => {
-        const price = parseFloat(
-          item.price?.replace("€", "").replace(",", ".")
-        );
-        const quantity = Number(item.quantity);
-        return total + (isNaN(price) || isNaN(quantity) ? 0 : price * quantity);
-      },
-      0
-    );
-
-    return totalPrice.toFixed(2);
+    const total = cartData.cart.totals.find((item: { title: string }) => item.title === "Total");
+    return total ? total.text.replace(/[^0-9.,]/g, '') : "0.00";
   };
 
   return (

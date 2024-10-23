@@ -16,7 +16,8 @@ import {
     GET_PRODUCT_BY_ID_SUCCESS,
     SET_LOADING,
     RESET_PRODUCTS,
-    SET_ACTIVE_CATEGORY_NAME
+    SET_ACTIVE_CATEGORY_NAME,
+    UPDATE_PRODUCTS
 } from "../actions";
 import { CartData } from '../actions';
 
@@ -74,6 +75,7 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
         case ADD_QUANTITY:
         case UPDATE_CART_DATA:
         case DELETE_FROM_CART:
+            console.log(`Reducer: Handling ${action.type}`, action.payload);
             return {
                 ...state,
                 products: Array.isArray(action.payload)
@@ -82,13 +84,14 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
                         : state.products,
             };
         case EDIT_PRODUCT:
+            console.log("Reducer: Handling EDIT_PRODUCT", action.payload);
             return {
                 ...state,
-                products: state.products.map(item =>
-                    item.product_id === action.payload.product_id
-                        ? { ...item, ...action.payload }
-                        : item
-                ),
+                products: state.products.map(product =>
+                    product.product_id === action.payload.product_id
+                        ? { ...product, quantity: action.payload.quantity }
+                        : product
+                )
             };
         case SET_SELECTED_CITY:
             return {
@@ -117,6 +120,7 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
             };
 
         case GET_CART_SUCCESS:
+            console.log("Reducer: Handling GET_CART_SUCCESS", action.payload);
             return {
                 ...state,
                 cart: action.payload,
@@ -145,6 +149,12 @@ const reducer = (state = initialState, action: CartActionTypes): CartState => {
             return {
                 ...state,
                 activeCategoryName: action.payload
+            };
+
+        case UPDATE_PRODUCTS:
+            return {
+                ...state,
+                products: action.payload
             };
 
         default:

@@ -56,14 +56,13 @@ export default function ClientLayout({
   useEffect(() => {
     const fetchSessionData = async () => {
       try {
-        console.log("Fetching session data...");
+       
         const res = await getSessionState();
-        console.log("Session data response:", res.data);
 
         const { sessionData } = res.data;
         if (sessionData && sessionData.api_token) {
           setToken(sessionData.api_token);
-          console.log("Token set successfully:", sessionData.api_token);
+  
 
           // Make a test request to /api/currency
           try {
