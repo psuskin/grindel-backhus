@@ -2,18 +2,18 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
 import ProductList from "@/components/Products/ProductList";
-import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
-import { getCartAsync, getProductsByCategoryAsync } from "@/redux/thunk";
-import { resetProducts } from "@/redux/actions";
 import Loading from "@/components/Loading";
 import { toast } from "sonner";
-import { RootState } from "@/redux/store";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  useGetCartQuery,
+  useGetProductsByCategoryQuery,
+  useGetMenuContentQuery,
+} from "@/services/api";
 
 interface MenuContent {
   name: string;
@@ -23,76 +23,50 @@ interface MenuContent {
 }
 
 const Shop = () => {
-  const [menuContents, setMenuContents] = useState<MenuContent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const searchParams = useSearchParams();
   const menuId = searchParams.get("menu");
-  const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const cartItems = useAppSelector((state: RootState) => state.cart.products);
-  const cartContents = useAppSelector(
-    (state: RootState) => state.cart.cart?.menu?.contents
-  );
+  const { data: cartData, isLoading: isCartLoading } = useGetCartQuery();
+  const { data: menuContentData, isLoading: isMenuContentLoading } =
+    useGetMenuContentQuery(menuId || "");
 
-  useEffect(() => {
-    const fetchMenuContent = async () => {
-      if (menuId) {
-        try {
-          const response = await axios.post("/api/get-menu-content", {
-            menu: menuId,
-          });
-          if (response.data.contents) {
-            setMenuContents(response.data.contents);
-            dispatch(
-              getProductsByCategoryAsync(
-                response.data.contents[0].ids[0].toString()
-              )
-            );
-          } else {
-            setError("No menu contents found");
-          }
-        } catch (error) {
-          console.error("Failed to fetch menu content:", error);
-          setError("Failed to fetch menu content");
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
+  const currentCategoryId =
+    menuContentData?.contents[activeStep]?.ids[0]?.toString() || "";
+  const { data: productsData, isLoading: isProductsLoading } =
+    useGetProductsByCategoryQuery(currentCategoryId, {
+      skip: !currentCategoryId,
+    });
 
-    fetchMenuContent();
-    dispatch(getCartAsync());
-
-    return () => {
-      dispatch(resetProducts());
-    };
-  }, [menuId, dispatch]);
+  const cartItems = cartData?.products || [];
+  const menuContents = menuContentData?.contents || [];
+  const currentCategory = menuContents[activeStep];
 
   const handleNext = () => {
-    const currentCategory = cartContents?.[activeStep];
+    const currentCategory = menuContents[activeStep];
 
-    if (currentCategory?.name === "Salate") {
-      const requiredCount = currentCategory.count || 2;
-      const currentCount = currentCategory.currentCount || 0;
+    if (currentCategory) {
+      const requiredCount = currentCategory.count || 0;
+      const currentCount =
+        cartData?.cart?.menu?.contents?.find(
+          (content: any) => content.name === currentCategory.name
+        )?.currentCount || 0;
 
       if (currentCount < requiredCount) {
         toast.error(
-          `Please select at least ${requiredCount} Salate items. You have selected ${currentCount}.`
+          `Please select at least ${requiredCount} ${
+            currentCategory.name
+          } item${
+            requiredCount > 1 ? "s" : ""
+          }. You have selected ${currentCount}.`
         );
         return;
       }
     }
 
-    if (activeStep < (cartContents?.length || 0) - 1) {
+    if (activeStep < menuContents.length - 1) {
       setActiveStep((prevStep) => prevStep + 1);
-      dispatch(
-        getProductsByCategoryAsync(
-          cartContents[activeStep + 1].ids[0].toString()
-        )
-      );
     } else {
       router.push("/cart");
     }
@@ -100,17 +74,12 @@ const Shop = () => {
 
   const handlePrevious = () => {
     if (activeStep > 0) {
-      const newStep = activeStep - 1;
-      setActiveStep(newStep);
-      const previousCategory = cartContents?.[newStep] || menuContents[newStep];
-      dispatch(getProductsByCategoryAsync(previousCategory.ids[0].toString()));
+      setActiveStep((prevStep) => prevStep - 1);
     }
   };
 
-  if (loading) return <Loading />;
-  if (error) return <div className="text-red-500 text-center mt-20">{error}</div>;
-
-  const currentCategory = cartContents?.[activeStep] || menuContents[activeStep];
+  if (isCartLoading || isMenuContentLoading || isProductsLoading)
+    return <Loading />;
 
   return (
     <div className="min-h-screen bg-gray-100 py-20 px-4 sm:px-6 lg:px-8">
@@ -123,16 +92,20 @@ const Shop = () => {
         >
           <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">{currentCategory?.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {currentCategory?.name}
+              </h1>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-500">
-                  Step {activeStep + 1} of {cartContents?.length || menuContents.length}
+                  Step {activeStep + 1} of {menuContents.length}
                 </span>
                 <div className="flex space-x-2">
                   <button
                     onClick={handlePrevious}
                     className={`p-2 rounded-full ${
-                      activeStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      activeStep === 0
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                     }`}
                     disabled={activeStep === 0}
                   >
@@ -148,9 +121,11 @@ const Shop = () => {
               </div>
             </div>
             <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-green-600 h-2 rounded-full transition-all duration-500 ease-out" 
-                style={{ width: `${((activeStep + 1) / (cartContents?.length || menuContents.length)) * 100}%` }}
+              <div
+                className="bg-green-600 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{
+                  width: `${((activeStep + 1) / menuContents.length) * 100}%`,
+                }}
               ></div>
             </div>
           </div>
@@ -166,7 +141,9 @@ const Shop = () => {
             <button
               onClick={handlePrevious}
               className={`px-6 py-2 ${
-                activeStep === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                activeStep === 0
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               } rounded-lg transition-colors`}
               disabled={activeStep === 0}
             >
@@ -176,7 +153,7 @@ const Shop = () => {
               onClick={handleNext}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              {activeStep === (cartContents?.length || menuContents.length) - 1 ? "Go to Cart" : "Next"}
+              {activeStep === menuContents.length - 1 ? "Go to Cart" : "Next"}
             </button>
           </div>
         </motion.div>

@@ -2,11 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Loader2, ShoppingBag } from "lucide-react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { getCartAsync } from "@/redux/thunk";
+import CartWidget from "./CartWidget";
 
 interface NavItemProps {
   title: string;
@@ -122,34 +118,6 @@ const NavItem: React.FC<NavItemProps> = ({ title, items }) => {
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const dispatch = useAppDispatch();
-  const cartData = useSelector((state: RootState) => state.cart);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      await dispatch(getCartAsync());
-      setLoading(false);
-    };
-    fetchData();
-  }, [dispatch]);
-
-  const getTotalItems = (): number => {
-    if (!cartData.products) return 0;
-
-    return cartData.products.reduce((total: number, item: { quantity: any }) => {
-      const quantity = Number(item.quantity);
-      return total + (isNaN(quantity) ? 0 : quantity);
-    }, 0);
-  };
-
-  const getTotalPrice = (): string => {
-    if (!cartData.cart || !cartData.cart.totals) return "0.00";
-
-    const total = cartData.cart.totals.find((item: { title: string }) => item.title === "Total");
-    return total ? total.text.replace(/[^0-9.,]/g, '') : "0.00";
-  };
 
   return (
     <nav className="bg-white shadow-md fixed top-0 w-full z-50">
@@ -195,52 +163,7 @@ const Navbar = () => {
                 />
               </svg>
             </button>
-            {/* Cart */}
-            <Link
-              href="/cart"
-              className="relative group flex items-center ml-6"
-            >
-              <div className="bg-green-600 p-0.5 rounded-full">
-                <div className="bg-white dark:bg-gray-900 rounded-full p-2 transition-all duration-300 group-hover:bg-opacity-0">
-                  <ShoppingBag className="h-6 w-6 text-green-500 group-hover:text-white transition-colors duration-300" />
-                </div>
-              </div>
-              {!loading && getTotalItems() > 0 && (
-                <span className="absolute -top-2 -left-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {getTotalItems()}
-                </span>
-              )}
-              <div className="ml-2 hidden lg:block">
-                {loading ? (
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-green-500" />
-                    <span className="text-sm font-medium">Loading...</span>
-                  </div>
-                ) : (
-                  <div className="text-sm font-medium">
-                    <span className="text-green-500">{getTotalPrice()} €</span>
-                  </div>
-                )}
-              </div>
-              <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none lg:hidden">
-                {loading ? (
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-green-500" />
-                    <span className="text-sm font-medium">Loading...</span>
-                  </div>
-                ) : (
-                  <div className="text-sm font-medium w-full flex flex-col">
-                    <span className="text-gray-600 whitespace-nowrap">
-                      {getTotalItems()} items
-                    </span>
-                    <span className="text-green-500 whitespace-nowrap">
-                      {getTotalPrice()} €
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Link>
-
+            <CartWidget />
             <div className="md:hidden ml-4">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}

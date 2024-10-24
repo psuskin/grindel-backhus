@@ -1,57 +1,45 @@
-import React, { useMemo } from "react";
+import React from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { editProductAsyncData, DeleteFromCartAsync } from "../../redux/thunk";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { TrashIcon } from "lucide-react";
+import { FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
 
 interface ProductItemProps {
   product: {
     product_id: number;
-    name: string;
-    thumb: string;
-    price: string;
+    name?: string;
+    thumb?: string;
+    price?: string | number;
     quantity: number;
     leadTime?: string;
   };
+  onIncrement: () => void;
+  onDecrement: () => void;
+  onRemove: () => void;
 }
 
-const ProductItem = ({ product }: { product: any }) => {
-  const dispatch = useAppDispatch();
-
-  const handleIncrement = () => {
-    dispatch(
-      editProductAsyncData({
-        ...product,
-        quantity: Number(product.quantity) + 1,
-      })
-    );
-  };
-
-  const handleDecrement = () => {
-    if (Number(product.quantity) > 1) {
-      dispatch(
-        editProductAsyncData({
-          ...product,
-          quantity: Number(product.quantity) - 1,
-        })
-      );
-    } else {
-      handleRemove();
+const ProductItem: React.FC<ProductItemProps> = ({
+  product,
+  onIncrement,
+  onDecrement,
+  onRemove,
+}) => {
+  const formatPrice = (price: string | number | undefined): string => {
+    if (typeof price === "number") {
+      return price.toFixed(2);
     }
+    if (typeof price === "string") {
+      const numericPrice = parseFloat(price.replace(/[^0-9.-]+/g, ""));
+      return isNaN(numericPrice) ? "0.00" : numericPrice.toFixed(2);
+    }
+    return "0.00";
   };
 
-  const handleRemove = () => {
-    dispatch(DeleteFromCartAsync(product));
-  };
-
-  const totalPrice = useMemo(() => {
-    const price = parseFloat(product.price);
-    const quantity = Number(product.quantity);
-    return !isNaN(price) && !isNaN(quantity)
-      ? (price * quantity).toFixed(2)
-      : '0.00';
-  }, [product.price, product.quantity]);
+  const totalPrice = formatPrice(
+    typeof product.price === "number"
+      ? product.price * product.quantity
+      : parseFloat((product.price || "0").replace(/[^0-9.-]+/g, "")) *
+          product.quantity
+  );
 
   return (
     <motion.div
@@ -59,36 +47,20 @@ const ProductItem = ({ product }: { product: any }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
-      className="grid grid-cols-4 md:grid-cols-5 gap-4 items-center py-4 border-b border-gray-200"
+      transition={{ duration: 0.3 }}
+      className="grid grid-cols-5 gap-4 items-center py-4 border-b"
     >
       <div className="col-span-2 flex items-center space-x-4">
-        <motion.div 
-          className="relative w-16 h-16 md:w-20 md:h-20 overflow-hidden rounded-lg"
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Image
-            src={product?.thumb || "/images/placeholder.png"}
-            alt={product.name}
-            layout="fill"
-            objectFit="cover"
-          />
-        </motion.div>
-        <div>
-          <h3 className="font-semibold text-sm md:text-lg text-gray-800">
-            {product.name}
-          </h3>
-          {product.leadTime && (
-            <p className="text-xs md:text-sm text-gray-500">
-              Lead time: {product.leadTime}
-            </p>
-          )}
-        </div>
+        <Image
+          src={product.thumb || "/images/placeholder.png"}
+          alt={product.name || ""}
+          width={100}
+          height={100}
+          className="rounded-md"
+        />
+        <span className="font-medium">{product.name}</span>
       </div>
-      <div className="text-center hidden md:block">
-        <p className="font-medium text-gray-800">{product.price}</p>
-      </div>
+      <div className="text-center">{formatPrice(product.price)} €</div>
       <div className="flex items-center justify-center">
         <motion.div 
           className="flex items-center bg-green-100 rounded-full p-1"
@@ -97,29 +69,31 @@ const ProductItem = ({ product }: { product: any }) => {
         >
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={handleDecrement}
+            onClick={onDecrement}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm"
           >
-            -
+            <FiMinus />
           </motion.button>
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={product.quantity}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="mx-3 font-medium"
-            >
-              {product.quantity}
-            </motion.span>
-          </AnimatePresence>
+          <div className="relative w-8 h-8 mx-2 overflow-hidden">
+            <AnimatePresence initial={false}>
+              <motion.span
+                key={product.quantity}
+                className="absolute inset-0 flex items-center justify-center"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {product.quantity}
+              </motion.span>
+            </AnimatePresence>
+          </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={handleIncrement}
+            onClick={onIncrement}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm"
           >
-            +
+            <FiPlus />
           </motion.button>
         </motion.div>
       </div>
@@ -133,20 +107,20 @@ const ProductItem = ({ product }: { product: any }) => {
             transition={{ duration: 0.2 }}
             className="hidden md:block font-semibold text-md md:text-lg text-gray-800"
           >
-            {totalPrice}
+            {totalPrice} €
           </motion.p>
         </AnimatePresence>
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          onClick={handleRemove}
+          onClick={onRemove}
           className="text-red-500 hover:text-red-600 transition-colors"
         >
-          <TrashIcon className="h-5 w-5" />
+          <FiTrash2 className="h-5 w-5" />
         </motion.button>
       </div>
     </motion.div>
   );
 };
 
-export default React.memo(ProductItem);
+export default ProductItem;

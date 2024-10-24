@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import axios from "axios";
 import {
   Leaf,
   Globe,
@@ -13,8 +12,7 @@ import {
 } from "lucide-react";
 import Loading from "../Loading";
 import { toast } from "sonner";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { addMainProductToAsync } from "@/redux/thunk";
+import { useGetProductByIdQuery, useAddToCartMutation } from "@/services/api";
 
 interface Product {
   product_id: string;
@@ -36,42 +34,19 @@ const ProductDetails: React.FC<{ id: string; menuName: string | null }> = ({
   id,
   menuName,
 }) => {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const dispatch = useAppDispatch();
+  const { data: productData, isLoading, error } = useGetProductByIdQuery(id);
+  const [addToCart] = useAddToCartMutation();
 
-  useEffect(() => {
-    const fetchProductById = async () => {
-      try {
-        const response = await axios.post("/api/get-product-by-id", {
-          productId: id,
-        });
-        if (response.status === 200) {
-          setSelectedProduct(response.data.products[0]);
-        } else {
-          setError("Failed to fetch product");
-        }
-      } catch (error) {
-        console.error("Failed to fetch product:", error);
-        setError("Failed to fetch product");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProductById();
-  }, [id]);
+  const selectedProduct = productData?.products[0];
 
   const handleAddToCart = async () => {
     const toastId = toast.loading("Adding product to the cart...");
     try {
-      await dispatch(
-        addMainProductToAsync({
-          product_id: selectedProduct?.product_id,
-          quantity: quantity,
-        })
-      );
+      await addToCart({
+        id: selectedProduct?.product_id,
+        quantity,
+      });
       toast.success("Product added successfully to the cart", { id: toastId });
     } catch (error) {
       toast.error("Failed to add product to the cart", { id: toastId });
@@ -79,8 +54,8 @@ const ProductDetails: React.FC<{ id: string; menuName: string | null }> = ({
     }
   };
 
-  if (loading) return <Loading />;
-  if (error) return <ErrorDisplay message={error} />;
+  if (isLoading) return <Loading />;
+  if (error) return <ErrorDisplay message="Failed to fetch product" />;
   if (!selectedProduct) return <ErrorDisplay message="Product not found" />;
 
   return (
@@ -137,7 +112,7 @@ const ProductDetails: React.FC<{ id: string; menuName: string | null }> = ({
           </div>
 
           <div className="space-y-8">
-            <div className="flex  items-center gap-4">
+            <div className="flex items-center gap-4">
               <div className="flex items-center justify-between border-2 border-green-600 rounded-full overflow-hidden w-full md:w-auto">
                 <button
                   className="p-3 text-green-600 hover:bg-green-100 transition duration-300"

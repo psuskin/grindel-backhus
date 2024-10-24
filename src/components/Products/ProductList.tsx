@@ -1,47 +1,38 @@
-import React, { useMemo } from "react";
+import React from "react";
 import ProductCard from "./ProductCard";
-import { useAppSelector } from "@/hooks/useAppDispatch";
-import { RootState } from "@/redux/store";
+import { useGetProductsByCategoryQuery } from "@/services/api";
 import Loading from "../Loading";
+
+interface MenuContent {
+  name: string;
+  ids: number[];
+}
 
 const ProductList = ({
   menuContents,
   activeCategory,
 }: {
-  menuContents: any[];
+  menuContents: MenuContent[];
   activeCategory: string | null;
 }) => {
-  const products = useAppSelector((state: RootState) => state.products);
-  const cartItems = useAppSelector((state: RootState) => state.cart.products);
-  const loading = useAppSelector((state: RootState) => state.loading);
+  const { data, isLoading, error } = useGetProductsByCategoryQuery(activeCategory || '');
 
-  const activeCategoryName =
-    menuContents.find((content) => content.ids[0].toString() === activeCategory)
-      ?.name || "";
-
-  const mergedProducts = useMemo(() => {
-    console.log("ProductList: Merging products", products, cartItems);
-    return products.map(product => {
-      const cartItem = cartItems?.find((item: { product_id: number; }) => item.product_id === product.product_id);
-      return {
-        ...product,
-        quantity: cartItem ? Number(cartItem.quantity) : 0,
-        cart_id: cartItem ? cartItem.cart_id : undefined
-      };
-    });
-  }, [products, cartItems]);
-
-  console.log("ProductList: Rendered with mergedProducts", mergedProducts);
-
-  if (loading) {
-    return (
-      <div className="col-span-full flex justify-center items-center py-12">
-        <Loading />
-      </div>
+  const activeCategoryName = React.useMemo(() => {
+    if (!menuContents || !Array.isArray(menuContents) || menuContents.length === 0) {
+      return "";
+    }
+    const content = menuContents.find((content) => 
+      content.ids && content.ids[0] && content.ids[0].toString() === activeCategory
     );
-  }
+    return content?.name || "";
+  }, [menuContents, activeCategory]);
 
-  if (!mergedProducts || mergedProducts.length === 0) {
+  if (isLoading) return <Loading />;
+  if (error) return <div>Error loading products</div>;
+
+  const products = data?.products || [];
+
+  if (products.length === 0) {
     return (
       <div className="col-span-full flex justify-center items-center py-12">
         <p className="text-xl text-gray-600">
@@ -53,9 +44,9 @@ const ProductList = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {mergedProducts.map((product: any, index: number) => (
+      {products.map((product: any) => (
         <ProductCard
-          key={`${product.product_id}-${index}`}
+          key={product.product_id}
           product={product}
           activeCategoryName={activeCategoryName}
         />

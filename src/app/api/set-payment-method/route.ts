@@ -10,18 +10,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { id, quantity } = await req.json();
+        const { payment_method } = await req.json();
 
-        if (!id) {
-            return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+        if (!payment_method) {
+            return NextResponse.json({ error: "Payment method is required" }, { status: 400 });
         }
 
         const formData = new URLSearchParams();
-        formData.append("key", id);
-        formData.append("quantity", quantity ? quantity.toString() : "0");
+        formData.append("payment_method", payment_method);
 
         const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_ENDPOINT}/sale/cart.remove&api_token=${session}`,
+            `${process.env.NEXT_PUBLIC_API_ENDPOINT}/sale/payment_method.save&api_token=${session}`,
             formData,
             {
                 headers: {
@@ -30,11 +29,11 @@ export async function POST(req: NextRequest) {
             }
         );
 
-        console.log("Remove product response:", response.data);
+        console.log("Set payment method response:", response.data);
         return NextResponse.json(response.data, { status: 200 });
 
     } catch (error) {
-        console.error("Remove product error:", error);
+        console.error("Set payment method error:", error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : "An unknown error occurred" },
             { status: 500 }

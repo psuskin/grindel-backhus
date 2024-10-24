@@ -31,13 +31,13 @@ export interface Filters {
 
 
 export interface Product {
-    quantity: ReactNode;
-    cart_id: string;
     product_id: string;
-    thumb: string;
     name: string;
-    description?: string; // Optional
     price: string;
+    quantity: number | string; // Allow for both number and string
+    cart_id: string;
+    thumb: string;
+    description?: string; // Optional
     special?: boolean; // Optional
     tax?: string; // Optional
     minimum?: string; // Optional

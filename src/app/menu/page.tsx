@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Leaf, Users } from "lucide-react";
-
-import { getPackagesAsync } from "@/redux/thunk";
+import { Users } from "lucide-react";
 import Loading from "@/components/Loading";
-import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
+import { useGetPackagesQuery } from "@/services/api";
 
 interface MenuItemProps {
   name: string;
@@ -60,21 +58,18 @@ const MenuItem: React.FC<MenuItemProps> = ({
 );
 
 const Menu = () => {
-  const dispatch = useAppDispatch();
-  const packages = useAppSelector((state) => state.packages);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPackages = async () => {
-      await dispatch(getPackagesAsync());
-      setIsLoading(false);
-    };
-    fetchPackages();
-  }, [dispatch]);
+  const { data, isLoading, error } = useGetPackagesQuery();
 
   if (isLoading) {
     return <Loading />;
   }
+
+  if (error) {
+    return <div>Error loading packages. Please try again later.</div>;
+  }
+
+  // Ensure packages is an array
+  const packages = Array.isArray(data) ? data : data?.packages || [];
 
   return (
     <div className="max-w-7xl min-h-screen mx-auto px-4 py-16 mt-28">
@@ -84,17 +79,21 @@ const Menu = () => {
       <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto text-lg">
         Choose from our selection of catering packages to suit your event.
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-        {packages.map((pkg) => (
-          <MenuItem
-            key={pkg.id}
-            name={pkg.name}
-            id={pkg.id}
-            price={pkg.price}
-            minimumClients={pkg.minimumClients}
-          />
-        ))}
-      </div>
+      {packages.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {packages.map((pkg: MenuItemProps) => (
+            <MenuItem
+              key={pkg.id}
+              name={pkg.name}
+              id={pkg.id}
+              price={pkg.price}
+              minimumClients={pkg.minimumClients}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-gray-600">No packages available at the moment.</p>
+      )}
       <div className="bg-green-50 rounded-xl p-8 text-center">
         <p className="text-gray-700 text-lg max-w-3xl mx-auto">
           Delivery, assembly, cleaning and collection free of charge, throughout
