@@ -23,6 +23,14 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         return "Unknown Payment Method";
     }
   };
+  const getShippingMethodName = (code: string) => {
+    switch (code) {
+      case "flat.flat":
+        return "Flat Rate";
+      default:
+        return "Unknown Shipping Method";
+    }
+  };
 
   return (
     <motion.div
@@ -47,10 +55,14 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <p>{`${checkoutData.shippingAddress.city}, ${checkoutData.shippingAddress.zone_id} ${checkoutData.shippingAddress.country_id}`}</p>
         </div>
         <div>
-          <h3 className="text-lg font-semibold mb-2">Billing Address</h3>
+          <h3 className="text-lg font-semibold mb-2">Payment Address</h3>
           <p>{`${checkoutData.paymentAddress.firstname} ${checkoutData.paymentAddress.lastname}`}</p>
           <p>{checkoutData.paymentAddress.address_1}</p>
           <p>{`${checkoutData.paymentAddress.city}, ${checkoutData.paymentAddress.zone_id} ${checkoutData.paymentAddress.country_id}`}</p>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Shipping Method</h3>
+          <p>{getShippingMethodName(checkoutData.shippingMethod)}</p>
         </div>
       </div>
       <div className="flex space-x-4 mt-8">

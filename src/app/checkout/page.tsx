@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useGetPaymentMethodsQuery, useSetPaymentMethodMutation, useGetCartQuery } from "@/services/api";
+import { useGetPaymentMethodsQuery, useSetPaymentMethodMutation, useGetCartQuery, useSetShippingMethodMutation } from "@/services/api";
 import { useSetShippingAddressMutation, useSetPaymentAddressMutation } from "@/services/api";
 import Loading from "@/components/Loading";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { CreditCard, Truck, CheckCircle, MapPin } from "lucide-react";
 import PaymentMethodStep from "@/components/Checkout/SetPaymentMethodStep";
 import ShippingAddressStep from "@/components/Checkout/SetShippingAddressStep";
 import PaymentAddressStep from "@/components/Checkout/SetPaymentAddressStep";
+import ShippingMethodStep from "@/components/Checkout/ShippingMethodStep";
 import ReviewStep from "@/components/Checkout/ReviewStep";
 import ConfirmationStep from "@/components/Checkout/ConfirmationStep";
 import CheckoutSidebar from "@/components/Checkout/CheckoutSidebar";
@@ -20,11 +21,13 @@ const Checkout: React.FC = () => {
   const [setPaymentMethod] = useSetPaymentMethodMutation();
   const [setShippingAddress] = useSetShippingAddressMutation();
   const [setPaymentAddress] = useSetPaymentAddressMutation();
+  const [setShippingMethod] = useSetShippingMethodMutation();
   const [step, setStep] = useState(1);
   const [checkoutData, setCheckoutData] = useState({
     paymentMethod: "",
     shippingAddress: {},
     paymentAddress: {},
+    shippingMethod: "",
   });
 
   if (isPaymentLoading || isCartLoading) return <Loading />;
@@ -67,11 +70,26 @@ const Checkout: React.FC = () => {
     }
   };
 
+
+  const handleSetShippingMethod = async (method: string) => {
+    try {
+      await setShippingMethod({ shipping_method: method }).unwrap();
+      setCheckoutData({ ...checkoutData, shippingMethod: method });
+      toast.success("Shipping method set successfully");
+      setStep(5);
+    } catch (error) {
+      toast.error("Failed to set shipping method");
+    }
+  };
+  
+  
+
   const steps = [
-    { title: "Payment", icon: <CreditCard className="w-6 h-6" /> },
-    { title: "Shipping", icon: <Truck className="w-6 h-6" /> },
-    { title: "Billing", icon: <MapPin className="w-6 h-6" /> },
-    { title: "Review", icon: <CheckCircle className="w-6 h-6" /> },
+    { title: "Payment Method", icon: <CreditCard className="w-6 h-6" /> },
+    { title: "Shipping Address", icon: <Truck className="w-6 h-6" /> },
+    { title: "Payment Address", icon: <MapPin className="w-6 h-6" /> },
+    { title: "Shipping Method", icon: <Truck className="w-6 h-6" /> },
+    { title: "Review Order", icon: <CheckCircle className="w-6 h-6" /> },
   ];
 
   return (
@@ -102,7 +120,7 @@ const Checkout: React.FC = () => {
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div 
                     className="bg-green-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
-                    style={{ width: `${((step - 1) / (steps.length - 1)) * 75}%` }}
+                    style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
                   ></div>
                 </div>
               </div>
@@ -130,14 +148,21 @@ const Checkout: React.FC = () => {
                 )}
 
                 {step === 4 && (
-                  <ReviewStep
-                    checkoutData={checkoutData}
+                  <ShippingMethodStep
+                    onSetShippingMethod={handleSetShippingMethod}
                     onBack={() => setStep(3)}
-                    onConfirm={() => setStep(5)}
                   />
                 )}
 
                 {step === 5 && (
+                  <ReviewStep
+                    checkoutData={checkoutData}
+                    onBack={() => setStep(4)}
+                    onConfirm={() => setStep(6)}
+                  />
+                )}
+
+                {step === 6 && (
                   <ConfirmationStep />
                 )}
               </AnimatePresence>

@@ -108,6 +108,16 @@ export const api = createApi({
                 body,
             }),
         }),
+        getShippingMethod: builder.query<any, void>({
+            query: () => 'get-shipping-method',
+        }),
+        setShippingMethod: builder.mutation<any, { shipping_method: string }>({
+            query: (body) => ({
+                url: 'set-shipping-method',
+                method: 'POST',
+                body,
+            }),
+        }),
     }),
 });
 
@@ -124,4 +134,6 @@ export const {
     useSetPaymentMethodMutation,
     useSetShippingAddressMutation,
     useSetPaymentAddressMutation,
+    useGetShippingMethodQuery,
+    useSetShippingMethodMutation,
 } = api;

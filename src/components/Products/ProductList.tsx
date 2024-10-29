@@ -22,7 +22,7 @@ const ProductList = ({
       return "";
     }
     const content = menuContents.find((content) => 
-      content.ids && content.ids[0] && content.ids[0].toString() === activeCategory
+      content?.ids && content.ids[0] && content.ids[0].toString() === activeCategory
     );
     return content?.name || "";
   }, [menuContents, activeCategory]);

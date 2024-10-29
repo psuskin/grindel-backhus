@@ -102,7 +102,6 @@ const Cart: React.FC = () => {
 
   const handleCheckout = () => {
     const menuContents = cartData?.cart?.menu?.contents || [];
-    console.log(menuContents);
     for (const content of menuContents) {
       const requiredCount = content.count || 0;
       const currentCount = content.currentCount || 0;
@@ -210,20 +209,29 @@ const CartItemWithDetails: React.FC<{
   onDecrement: (item: CartItem) => void;
   onRemove: (item: CartItem) => void;
 }> = ({ item, onIncrement, onDecrement, onRemove }) => {
-  const { data: productDetails, isLoading } = useGetProductByIdQuery(
+  const { data: productDetails, isLoading, error } = useGetProductByIdQuery(
     item.product_id.toString()
   );
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex justify-start items-center py-4">
         <Loader2 className="w-6 h-6 animate-spin text-green-500" />
       </div>
     );
+  }
+
+  if (error || !productDetails || !productDetails.products || productDetails.products.length === 0) {
+    return (
+      <div className="flex justify-start items-center py-4 text-red-500">
+        Error loading product details. Please try again later.
+      </div>
+    );
+  }
 
   const product = {
     ...item,
-    ...productDetails?.products[0],
+    ...productDetails.products[0],
   };
 
   return (
