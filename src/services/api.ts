@@ -59,6 +59,7 @@ export const api = createApi({
                 method: 'POST',
                 body: { menu: menuId },
             }),
+            providesTags: ['Cart'],
         }),
         getProductById: builder.query<any, string>({
             query: (productId) => ({
@@ -118,6 +119,16 @@ export const api = createApi({
                 body,
             }),
         }),
+        getCategories: builder.query<any, void>({
+            query: () => 'get-categories',
+        }),
+        clearCart: builder.mutation<any, void>({
+            query: () => ({
+                url: 'clear-cart',
+                method: 'POST',
+            }),
+            invalidatesTags: ['Cart'],
+        }),
     }),
 });
 
@@ -136,4 +147,6 @@ export const {
     useSetPaymentAddressMutation,
     useGetShippingMethodQuery,
     useSetShippingMethodMutation,
+    useGetCategoriesQuery,
+    useClearCartMutation,
 } = api;

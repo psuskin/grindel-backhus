@@ -71,8 +71,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Set the ClientIP cookie
     cookieStore.set('ClientIP', ip, {
         httpOnly: true,
-        secure: true, 
-        sameSite: 'none', 
+        secure: true,
+        sameSite: 'none',
         path: '/',
     });
 
@@ -109,8 +109,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
                 value: response.data.api_token,
                 expires: expireDate,
                 httpOnly: true,
-                secure: true, 
-                sameSite: 'none', 
+                secure: true,
+                sameSite: 'none',
                 path: '/',
             });
 

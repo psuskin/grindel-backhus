@@ -9,11 +9,8 @@ import Loading from "@/components/Loading";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  useGetCartQuery,
-  useGetProductsByCategoryQuery,
-  useGetMenuContentQuery,
-} from "@/services/api";
+import { useGetCartQuery, useGetMenuContentQuery } from "@/services/api";
+import ExtraProductsModal from "@/components/Modals/ExtraProductsModal";
 
 interface MenuContent {
   name: string;
@@ -24,45 +21,116 @@ interface MenuContent {
 
 const Shop = () => {
   const [activeStep, setActiveStep] = useState(0);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const searchParams = useSearchParams();
   const menuId = searchParams.get("menu");
   const router = useRouter();
+  const [showExtraProductsModal, setShowExtraProductsModal] = useState(false);
 
-  const { data: cartData, isLoading: isCartLoading } = useGetCartQuery();
+  const {
+    data: cartData,
+    isLoading: isCartLoading,
+    refetch: refetchCart,
+  } = useGetCartQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
   const { data: menuContentData, isLoading: isMenuContentLoading } =
     useGetMenuContentQuery(menuId || "");
 
-  const currentCategoryId =
-    menuContentData?.contents[activeStep]?.ids[0]?.toString() || "";
-  const { data: productsData, isLoading: isProductsLoading } =
-    useGetProductsByCategoryQuery(currentCategoryId, {
-      skip: !currentCategoryId,
-    });
-
-  const cartItems = cartData?.products || [];
+  const currentCategory = menuContentData?.contents[activeStep];
   const menuContents = menuContentData?.contents || [];
-  const currentCategory = menuContents[activeStep];
+
+  const getCurrentCategoryCount = () => {
+    if (!currentCategory || !cartData?.cart?.menu?.contents) return 0;
+
+    const cartCategory = cartData.cart.menu.contents.find(
+      (content: any) => content.name === currentCategory.name
+    );
+
+    if (cartCategory?.currentCount !== undefined) {
+      return cartCategory.currentCount;
+    }
+
+    if (cartData.products && cartData.products.length > 0) {
+      const productsResponse = allProducts;
+
+      const validProductIds = productsResponse.map((p) =>
+        p.product_id.toString()
+      );
+
+      const categoryProducts = cartData.products.filter(
+        (product: { product_id: any }) =>
+          validProductIds.includes(product.product_id)
+      );
+
+      const count = categoryProducts.reduce(
+        (sum: number, product: any) => sum + Number(product.quantity),
+        0
+      );
+
+      return count;
+    }
+
+    return 0;
+  };
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!currentCategory?.ids) return;
+
+      setIsLoadingProducts(true);
+      setAllProducts([]);
+
+      try {
+        const productPromises = currentCategory.ids.map(
+          (id: { toString: () => any }) =>
+            fetch(`/api/get-products-by-category`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ categoryId: id.toString() }),
+            }).then((res) => res.json())
+        );
+
+        const results = await Promise.all(productPromises);
+        const combinedProducts = results.reduce((acc, result) => {
+          if (result.products) {
+            return [...acc, ...result.products];
+          }
+          return acc;
+        }, []);
+
+        setAllProducts(combinedProducts);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        toast.error("Failed to load products");
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, [currentCategory?.ids]);
 
   const handleNext = () => {
-    const currentCategory = menuContents[activeStep];
+    const currentCount = getCurrentCategoryCount();
+    const requiredCount = currentCategory?.count || 0;
 
-    if (currentCategory) {
-      const requiredCount = currentCategory.count || 0;
-      const currentCount =
-        cartData?.cart?.menu?.contents?.find(
-          (content: any) => content.name === currentCategory.name
-        )?.currentCount || 0;
+    if (currentCount === requiredCount) {
+      setShowExtraProductsModal(true);
+      return;
+    }
 
-      if (currentCount < requiredCount) {
-        toast.error(
-          `Please select at least ${requiredCount} ${
-            currentCategory.name
-          } item${
-            requiredCount > 1 ? "s" : ""
-          }. You have selected ${currentCount}.`
-        );
-        return;
-      }
+    if (currentCount < requiredCount) {
+      toast.error(
+        `Please select at least ${requiredCount} ${currentCategory.name} item${
+          requiredCount > 1 ? "s" : ""
+        }. You have selected ${currentCount}.`
+      );
+      return;
     }
 
     if (activeStep < menuContents.length - 1) {
@@ -78,12 +146,33 @@ const Shop = () => {
     }
   };
 
-  if (isCartLoading || isMenuContentLoading || isProductsLoading)
+  const handleModalNext = () => {
+    setShowExtraProductsModal(false);
+    if (activeStep < menuContents.length - 1) {
+      setActiveStep((prevStep) => prevStep + 1);
+    } else {
+      router.push("/cart");
+    }
+  };
+
+  // For modal trigger
+  useEffect(() => {
+    const handleShowModal = () => {
+      setShowExtraProductsModal(true);
+    };
+
+    window.addEventListener("showExtraProductsModal", handleShowModal);
+    return () => {
+      window.removeEventListener("showExtraProductsModal", handleShowModal);
+    };
+  }, []);
+
+  if (isCartLoading || isMenuContentLoading || isLoadingProducts)
     return <Loading />;
 
   return (
     <div className="min-h-screen bg-gray-100 py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -92,9 +181,14 @@ const Shop = () => {
         >
           <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {currentCategory?.name}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {currentCategory?.name}
+                </h1>
+                <span className="text-sm text-gray-500">
+                  {currentCategory?.count} selections included in package
+                </span>
+              </div>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-500">
                   Step {activeStep + 1} of {menuContents.length}
@@ -132,8 +226,11 @@ const Shop = () => {
 
           <div className="p-6">
             <ProductList
+              products={allProducts}
               menuContents={[currentCategory]}
-              activeCategory={currentCategory?.ids[0].toString()}
+              activeCategoryName={currentCategory?.name}
+              currentCount={getCurrentCategoryCount()}
+              requiredCount={currentCategory?.count || 0}
             />
           </div>
 
@@ -158,6 +255,11 @@ const Shop = () => {
           </div>
         </motion.div>
       </div>
+      <ExtraProductsModal
+        isOpen={showExtraProductsModal}
+        onClose={() => setShowExtraProductsModal(false)}
+        onNext={handleModalNext}
+      />
     </div>
   );
 };

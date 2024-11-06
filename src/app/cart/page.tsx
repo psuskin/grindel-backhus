@@ -12,8 +12,8 @@ import {
   useGetProductByIdQuery,
 } from "@/services/api";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { CartItemSkeleton } from "@/components/Skeletons/CartSkeleton";
 interface CartItem {
   product_id: number;
   cart_id: string;
@@ -34,7 +34,7 @@ const Cart: React.FC = () => {
   } = useGetCartQuery();
   const [editProduct] = useEditProductMutation();
   const [removeProduct] = useRemoveProductMutation();
-
+  console.log(cartData);
   const cartItems = useMemo(() => {
     return (
       cartData?.products?.map((product: CartItem) => ({
@@ -67,11 +67,16 @@ const Cart: React.FC = () => {
   const handleIncrement = async (item: CartItem) => {
     try {
       const newQuantity = Number(item.quantity) + 1;
-      await editProduct({ id: item.cart_id, quantity: newQuantity });
+      const response = await editProduct({ id: item.cart_id, quantity: newQuantity }).unwrap();
       await refetch();
-      toast.success("Item quantity increased");
-    } catch (error) {
-      toast.error("Failed to update quantity");
+      console.log(response.success);
+      if (response.success) {
+        toast.success("Item quantity increased");
+      } else {
+        toast.error("Failed to update quantity");
+      }
+    } catch (error: any) {
+      toast.error(error.data?.message || "Failed to update quantity");
     }
   };
 
@@ -79,11 +84,16 @@ const Cart: React.FC = () => {
     if (Number(item.quantity) > 1) {
       try {
         const newQuantity = Number(item.quantity) - 1;
-        await editProduct({ id: item.cart_id, quantity: newQuantity });
+        const response = await editProduct({ id: item.cart_id, quantity: newQuantity }).unwrap();
         await refetch();
-        toast.success("Item quantity decreased");
-      } catch (error) {
-        toast.error("Failed to update quantity");
+        
+        if (response.success) {
+          toast.success("Item quantity decreased");
+        } else {
+          toast.error("Failed to update quantity");
+        }
+      } catch (error: any) {
+        toast.error(error.data?.message || "Failed to update quantity");
       }
     } else {
       handleRemove(item);
@@ -92,26 +102,67 @@ const Cart: React.FC = () => {
 
   const handleRemove = async (item: CartItem) => {
     try {
-      await removeProduct({ id: item.cart_id, quantity: 0 });
+      const response = await removeProduct({ id: item.cart_id, quantity: 0 }).unwrap();
       await refetch();
-      toast.success("Item removed from cart");
-    } catch (error) {
-      toast.error("Failed to remove item");
+      
+      if (response.success) {
+        toast.success(response.message || "Item removed from cart");
+      } else {
+        toast.error(response.message || "Failed to remove item");
+      }
+    } catch (error: any) {
+      toast.error(error.data?.message || "Failed to remove item");
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     const menuContents = cartData?.cart?.menu?.contents || [];
-    for (const content of menuContents) {
-      const requiredCount = content.count || 0;
-      const currentCount = content.currentCount || 0;
 
-      if (currentCount < requiredCount) {
-        toast.error(
-          `Please select at least ${requiredCount} ${content.name} item${
-            requiredCount > 1 ? "s" : ""
-          }. You have selected ${currentCount}.`
+    for (const content of menuContents) {
+      try {
+        // Fetch products for this category
+        const productPromises = content.ids.map((id: number) =>
+          fetch(`/api/get-products-by-category`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ categoryId: id.toString() }),
+          }).then((res) => res.json())
         );
+
+        const results = await Promise.all(productPromises);
+        const categoryProducts = results.reduce((acc, result) => {
+          if (result.products) {
+            return [...acc, ...result.products];
+          }
+          return acc;
+        }, []);
+
+        const requiredCount = content.count || 0;
+        // Calculate currentCount from products array
+        const currentCount = cartData?.products?.reduce((sum: number, product: any) => {
+          // Check if this product belongs to current category
+          const isInCategory = categoryProducts.some((p: any) => 
+            p.product_id.toString() === product.product_id.toString()
+          );
+          
+          return isInCategory ? sum + Number(product.quantity) : sum;
+        }, 0) || 0;
+
+        console.log(`Category: ${content.name}, Required: ${requiredCount}, Current: ${currentCount}`); 
+
+        if (currentCount < requiredCount) {
+          toast.error(
+            `Please select at least ${requiredCount} ${content.name} item${
+              requiredCount > 1 ? "s" : ""
+            }. You have selected ${currentCount}.`
+          );
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking category products:", error);
+        toast.error("Failed to validate cart items. Please try again.");
         return;
       }
     }
@@ -209,19 +260,22 @@ const CartItemWithDetails: React.FC<{
   onDecrement: (item: CartItem) => void;
   onRemove: (item: CartItem) => void;
 }> = ({ item, onIncrement, onDecrement, onRemove }) => {
-  const { data: productDetails, isLoading, error } = useGetProductByIdQuery(
-    item.product_id.toString()
-  );
+  const {
+    data: productDetails,
+    isLoading,
+    error,
+  } = useGetProductByIdQuery(item.product_id.toString());
 
   if (isLoading) {
-    return (
-      <div className="flex justify-start items-center py-4">
-        <Loader2 className="w-6 h-6 animate-spin text-green-500" />
-      </div>
-    );
+    return <CartItemSkeleton />;
   }
 
-  if (error || !productDetails || !productDetails.products || productDetails.products.length === 0) {
+  if (
+    error ||
+    !productDetails ||
+    !productDetails.products ||
+    productDetails.products.length === 0
+  ) {
     return (
       <div className="flex justify-start items-center py-4 text-red-500">
         Error loading product details. Please try again later.

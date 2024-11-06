@@ -1,38 +1,34 @@
 import React from "react";
 import ProductCard from "./ProductCard";
-import { useGetProductsByCategoryQuery } from "@/services/api";
 import Loading from "../Loading";
 
 interface MenuContent {
   name: string;
   ids: number[];
+  count?: number;
 }
 
-const ProductList = ({
-  menuContents,
-  activeCategory,
-}: {
+interface Product {
+  product_id: string;
+  // Add other product properties as needed
+}
+
+interface ProductListProps {
+  products: Product[];
   menuContents: MenuContent[];
-  activeCategory: string | null;
+  activeCategoryName?: string;
+  currentCount: number;
+  requiredCount: number;
+}
+
+const ProductList: React.FC<ProductListProps> = ({
+  products,
+  menuContents,
+  activeCategoryName,
+  currentCount,
+  requiredCount
 }) => {
-  const { data, isLoading, error } = useGetProductsByCategoryQuery(activeCategory || '');
-
-  const activeCategoryName = React.useMemo(() => {
-    if (!menuContents || !Array.isArray(menuContents) || menuContents.length === 0) {
-      return "";
-    }
-    const content = menuContents.find((content) => 
-      content?.ids && content.ids[0] && content.ids[0].toString() === activeCategory
-    );
-    return content?.name || "";
-  }, [menuContents, activeCategory]);
-
-  if (isLoading) return <Loading />;
-  if (error) return <div>Error loading products</div>;
-
-  const products = data?.products || [];
-
-  if (products.length === 0) {
+  if (!products || products.length === 0) {
     return (
       <div className="col-span-full flex justify-center items-center py-12">
         <p className="text-xl text-gray-600">
@@ -43,15 +39,22 @@ const ProductList = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {products.map((product: any) => (
-        <ProductCard
-          key={product.product_id}
-          product={product}
-          activeCategoryName={activeCategoryName}
-        />
-      ))}
-    </div>
+    <>
+      <div className="mb-4 flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+          Selected: {currentCount} / {requiredCount} items
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {products.map((product: any) => (
+          <ProductCard
+            key={product.product_id}
+            product={product}
+            activeCategoryName={activeCategoryName || menuContents[0]?.name || ""}
+          />
+        ))}
+      </div>
+    </>
   );
 };
 
