@@ -61,7 +61,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
     >
       <h2 className="text-2xl font-semibold mb-6 flex items-center">
         <MapPin className="w-6 h-6 mr-2 text-green-500" />
-        Set Payment Address
+        Rechnungsadresse setzen
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -73,7 +73,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
               <input
                 {...field}
                 type="text"
-                placeholder="First Name"
+                placeholder="Vorname"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             )}
@@ -89,7 +89,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
               <input
                 {...field}
                 type="text"
-                placeholder="Last Name"
+                placeholder="Nachname"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             )}
@@ -106,7 +106,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
             <input
               {...field}
               type="text"
-              placeholder="Address"
+              placeholder="Adresse"
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           )}
@@ -122,7 +122,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
             <input
               {...field}
               type="text"
-              placeholder="City"
+              placeholder="Stadt"
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           )}
@@ -140,7 +140,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
                 {...field}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
-                <option value="">Select Country</option>
+                <option value="">Land auswählen</option>
                 {countries.map((country) => (
                   <option key={country.id} value={country.id}>
                     {country.name}
@@ -161,7 +161,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
                 {...field}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
-                <option value="">Select State/Province</option>
+                <option value="">Bundesland auswählen</option>
                 {zones.map((zone) => (
                   <option key={zone.id} value={zone.id}>
                     {zone.name}
@@ -189,14 +189,14 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
           onClick={onBack}
           className="w-1/2 bg-gray-200 text-gray-800 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center"
         >
-          <ArrowLeft className="mr-2 w-5 h-5" /> Back
+          <ArrowLeft className="mr-2 w-5 h-5" /> Zurück
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-1/2 bg-green-500 text-white py-4 rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? <Loader2 className="animate-spin" /> : "Review Order"}
+          {isSubmitting ? <Loader2 className="animate-spin" /> : "Bestellung überprüfen"}
         </button>
       </div>
     </motion.form>

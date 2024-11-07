@@ -23,14 +23,14 @@ const ShippingMethodStep: React.FC<ShippingMethodStepProps> = ({ onSetShippingMe
       await setShippingMethod({ shipping_method: selectedMethod }).unwrap();
       await onSetShippingMethod(selectedMethod);
     } catch (error) {
-      console.error("Failed to set shipping method:", error);
+      console.error("Fehler beim Setzen der Liefermethode:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (isLoading) return <Loading />;
-  if (error) return <div>Error loading shipping methods</div>;
+  if (error) return <div>Fehler beim Laden der Liefermethoden</div>;
 
   const shippingMethods = shippingMethodsData?.shipping_methods || {};
   return (
@@ -42,7 +42,7 @@ const ShippingMethodStep: React.FC<ShippingMethodStepProps> = ({ onSetShippingMe
     >
       <h2 className="text-2xl font-semibold mb-6 flex items-center">
         <Truck className="w-6 h-6 mr-2 text-green-500" />
-        Select Shipping Method
+        Liefermethode auswählen
       </h2>
       <div className="space-y-4 mb-8">
         {Object.entries(shippingMethods).map(([key, method]: [string, any]) => (
@@ -75,14 +75,14 @@ const ShippingMethodStep: React.FC<ShippingMethodStepProps> = ({ onSetShippingMe
           onClick={onBack}
           className="w-1/2 bg-gray-200 text-gray-800 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center"
         >
-          <ArrowLeft className="mr-2 w-5 h-5" /> Back
+          <ArrowLeft className="mr-2 w-5 h-5" /> Zurück
         </button>
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !selectedMethod}
           className="w-1/2 bg-green-500 text-white py-4 rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? <Loader2 className="animate-spin" /> : "Continue to Review"}
+          {isSubmitting ? <Loader2 className="animate-spin" /> : "Weiter zur Überprüfung"}
         </button>
       </div>
     </motion.div>

@@ -41,27 +41,27 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
     >
       <h2 className="text-2xl font-semibold mb-6 flex items-center">
         <CheckCircle className="w-6 h-6 mr-2 text-green-500" />
-        Review Your Order
+        Bestellung überprüfen
       </h2>
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold mb-2">Payment Method</h3>
+          <h3 className="text-lg font-semibold mb-2">Zahlungsmethode</h3>
           <p>{getPaymentMethodName(checkoutData.paymentMethod)}</p>
         </div>
         <div>
-          <h3 className="text-lg font-semibold mb-2">Shipping Address</h3>
+          <h3 className="text-lg font-semibold mb-2">Lieferadresse</h3>
           <p>{`${checkoutData.shippingAddress.firstname} ${checkoutData.shippingAddress.lastname}`}</p>
           <p>{checkoutData.shippingAddress.address_1}</p>
           <p>{`${checkoutData.shippingAddress.city}, ${checkoutData.shippingAddress.zone_id} ${checkoutData.shippingAddress.country_id}`}</p>
         </div>
         <div>
-          <h3 className="text-lg font-semibold mb-2">Payment Address</h3>
+          <h3 className="text-lg font-semibold mb-2">Rechnungsadresse</h3>
           <p>{`${checkoutData.paymentAddress.firstname} ${checkoutData.paymentAddress.lastname}`}</p>
           <p>{checkoutData.paymentAddress.address_1}</p>
           <p>{`${checkoutData.paymentAddress.city}, ${checkoutData.paymentAddress.zone_id} ${checkoutData.paymentAddress.country_id}`}</p>
         </div>
         <div>
-          <h3 className="text-lg font-semibold mb-2">Shipping Method</h3>
+          <h3 className="text-lg font-semibold mb-2">Liefermethode</h3>
           <p>{getShippingMethodName(checkoutData.shippingMethod)}</p>
         </div>
       </div>
@@ -70,13 +70,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           onClick={onBack}
           className="w-1/2 bg-gray-200 text-gray-800 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center"
         >
-          <ArrowLeft className="mr-2 w-5 h-5" /> Back
+          <ArrowLeft className="mr-2 w-5 h-5" /> Zurück
         </button>
         <button
           onClick={onConfirm}
           className="w-1/2 bg-green-500 text-white py-4 rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center"
         >
-          Confirm Order
+          Bestellung bestätigen
         </button>
       </div>
     </motion.div>

@@ -2,7 +2,12 @@ import { Product } from "@/types/product";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useAddToCartMutation, useEditProductMutation, useRemoveProductMutation, useGetCartQuery } from "@/services/api";
+import {
+  useAddToCartMutation,
+  useEditProductMutation,
+  useRemoveProductMutation,
+  useGetCartQuery,
+} from "@/services/api";
 import { toast } from "sonner";
 import { FiMinus, FiPlus, FiCheck } from "react-icons/fi";
 
@@ -25,30 +30,34 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { data: cartData, refetch: refetchCart } = useGetCartQuery();
 
   useEffect(() => {
-    const cartItem = cartData?.products?.find((item: any) => item.product_id === product.product_id);
+    const cartItem = cartData?.products?.find(
+      (item: any) => item.product_id === product.product_id
+    );
     setLocalQuantity(cartItem ? Number(cartItem.quantity) : 0);
   }, [cartData, product.product_id]);
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity < 0) return;
     setIsUpdating(true);
-    const toastId = toast.loading("Updating cart...");
+    const toastId = toast.loading("Warenkorb aktualisieren...");
     try {
-      const cartItem = cartData?.products?.find((item: any) => item.product_id === product.product_id);
+      const cartItem = cartData?.products?.find(
+        (item: any) => item.product_id === product.product_id
+      );
       if (newQuantity === 0 && cartItem) {
         await removeProduct({ id: cartItem.cart_id, quantity: 0 });
-        toast.success("Item Removed from Cart", { id: toastId });
+        toast.success("Produkt aus Warenkorb entfernt", { id: toastId });
       } else if (cartItem) {
         await editProduct({ id: cartItem.cart_id, quantity: newQuantity });
-        toast.success("Quantity Updated", { id: toastId });
+        toast.success("Menge aktualisiert", { id: toastId });
       } else if (newQuantity > 0) {
         await addToCart({ id: product.product_id, quantity: newQuantity });
-        toast.success("Item Added to Cart", { id: toastId });
+        toast.success("Produkt zum Warenkorb hinzugefügt", { id: toastId });
       }
       setLocalQuantity(newQuantity);
     } catch (error) {
-      console.error("Failed to update quantity", error);
-      toast.error("Failed to update cart. Please try again.", { id: toastId });
+      console.error("Fehler beim Aktualisieren des Warenkorbs", error);
+      toast.error("Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.", { id: toastId });
     } finally {
       setIsUpdating(false);
       setIsEditing(false);
@@ -67,17 +76,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleIncrement = async () => {
     setIsUpdating(true);
-    const toastId = toast.loading("Updating cart...");
+    const toastId = toast.loading("Warenkorb aktualisieren...");
     try {
       const newQuantity = localQuantity + 1;
-      const cartItem = cartData?.products?.find((item: any) => item.product_id === product.product_id);
+      const cartItem = cartData?.products?.find(
+        (item: any) => item.product_id === product.product_id
+      );
       if (cartItem) {
         await editProduct({ id: cartItem.cart_id, quantity: newQuantity });
       } else {
         await addToCart({ id: product.product_id, quantity: 1 });
       }
       setLocalQuantity(newQuantity);
-      toast.success("Item Added to Cart", { id: toastId });
+      toast.success("Produkt zum Warenkorb hinzugefügt", { id: toastId });
 
       const currentCategory = cartData?.cart?.menu?.contents?.find(
         (content: any) => content.name === activeCategoryName
@@ -86,11 +97,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
       const currentCount = (currentCategory?.currentCount || 0) + 1;
       if (currentCount === requiredCount) {
-        window.dispatchEvent(new CustomEvent('showExtraProductsModal'));
+        window.dispatchEvent(new CustomEvent("showExtraProductsModal"));
       }
     } catch (error) {
-      console.error("Failed to increment quantity", error);
-      toast.error("Failed to update cart. Please try again.", { id: toastId });
+      console.error("Fehler beim Erhöhen der Menge", error);
+      toast.error("Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.", { id: toastId });
     } finally {
       setIsUpdating(false);
       refetchCart();
@@ -100,23 +111,27 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleDecrement = async () => {
     if (localQuantity > 0) {
       setIsUpdating(true);
-      const toastId = toast.loading("Updating cart...");
+      const toastId = toast.loading("Warenkorb aktualisieren...");
       try {
         const newQuantity = localQuantity - 1;
-        const cartItem = cartData?.products?.find((item: any) => item.product_id === product.product_id);
+        const cartItem = cartData?.products?.find(
+          (item: any) => item.product_id === product.product_id
+        );
         if (cartItem) {
           if (newQuantity === 0) {
             await removeProduct({ id: cartItem.cart_id, quantity: 0 });
-            toast.success("Item Removed from Cart", { id: toastId });
+            toast.success("Produkt aus Warenkorb entfernt", { id: toastId });
           } else {
             await editProduct({ id: cartItem.cart_id, quantity: newQuantity });
-            toast.success("Item Quantity Decreased", { id: toastId });
+            toast.success("Menge verringert", { id: toastId });
           }
         }
         setLocalQuantity(newQuantity);
       } catch (error) {
-        console.error("Failed to decrement quantity", error);
-        toast.error("Failed to update cart. Please try again.", { id: toastId });
+        console.error("Fehler beim Verringern der Menge", error);
+        toast.error("Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.", {
+          id: toastId,
+        });
       } finally {
         setIsUpdating(false);
         refetchCart();
@@ -137,14 +152,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-gray-400 text-sm">No image</span>
+            <span className="text-gray-400 text-sm">Kein Bild verfügbar</span>
           </div>
         )}
         <div className="absolute top-3 right-3 bg-green-600 text-white px-3 py-1 text-sm font-medium rounded-2xl shadow-sm">
           {product.price}
         </div>
       </div>
-      
+
       <div className="p-3 flex flex-col flex-grow">
         <div className="flex-grow space-y-2">
           <div className="flex items-start justify-between gap-3">
@@ -152,10 +167,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
               {product.name}
             </h3>
             <Link
-              href={`/menu/shop/${product.product_id}?menuName=${encodeURIComponent(activeCategoryName)}`}
+              href={`/menu/shop/${
+                product.product_id
+              }?menuName=${encodeURIComponent(activeCategoryName)}`}
               className="text-xs text-green-600 hover:text-green-700 hover:underline whitespace-nowrap"
             >
-              Details
+              Einzelheiten
             </Link>
           </div>
         </div>
@@ -171,7 +188,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 <FiMinus className="w-4 h-4" />
               </button>
               {isEditing ? (
-                <form onSubmit={handleInputSubmit} className="min-w-[2rem] flex">
+                <form
+                  onSubmit={handleInputSubmit}
+                  className="min-w-[2rem] flex"
+                >
                   <input
                     type="number"
                     value={inputValue}
@@ -217,7 +237,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               className="w-full py-2 bg-green-600 text-white hover:bg-green-700 text-sm font-medium !rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
               disabled={isUpdating}
             >
-              Choose
+              Auswählen
             </button>
           )}
         </div>

@@ -120,8 +120,8 @@ const Shop = () => {
 
         setAllProducts(combinedProducts);
       } catch (error) {
-        console.error("Error fetching products:", error);
-        toast.error("Failed to load products");
+        console.error("Fehler beim Laden der Produkte:", error);
+        toast.error("Fehler beim Laden der Produkte");
       } finally {
         setIsLoadingProducts(false);
       }
@@ -158,9 +158,9 @@ const Shop = () => {
 
     if (currentCount < requiredCount) {
       toast.error(
-        `Please select at least ${requiredCount} ${currentCategory.name} item${
+        `Bitte wählen Sie mindestens ${requiredCount} ${currentCategory.name} Artikel${
           requiredCount > 1 ? "s" : ""
-        }. You have selected ${currentCount}.`
+        }. Sie haben ${currentCount} ausgewählt.`
       );
       return;
     }
@@ -206,12 +206,12 @@ const Shop = () => {
                   {currentCategory?.name}
                 </h1>
                 <span className="text-sm text-gray-500">
-                  {currentCategory?.count} selections included in package
+                  {currentCategory?.count} Auswahl inklusive im Paket
                 </span>
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-500">
-                  Step {activeStep + 1} of {menuContents.length}
+                  Schritt {activeStep + 1} von {menuContents.length}
                 </span>
                 <div className="flex space-x-2">
                   <button
@@ -264,13 +264,13 @@ const Shop = () => {
               } rounded-lg transition-colors`}
               disabled={activeStep === 0}
             >
-              Previous
+              Zurück
             </button>
             <button
               onClick={handleNext}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              {activeStep === menuContents.length - 1 ? "Go to Cart" : "Next"}
+              {activeStep === menuContents.length - 1 ? "Zur Kasse" : "Weiter"}
             </button>
           </div>
         </motion.div>

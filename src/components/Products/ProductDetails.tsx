@@ -41,22 +41,22 @@ const ProductDetails: React.FC<{ id: string; menuName: string | null }> = ({
   const selectedProduct = productData?.products[0];
 
   const handleAddToCart = async () => {
-    const toastId = toast.loading("Adding product to the cart...");
+    const toastId = toast.loading("Produkt wird zum Warenkorb hinzugefügt...");
     try {
       await addToCart({
         id: selectedProduct?.product_id,
         quantity,
       });
-      toast.success("Product added successfully to the cart", { id: toastId });
+      toast.success("Produkt erfolgreich zum Warenkorb hinzugefügt", { id: toastId });
     } catch (error) {
-      toast.error("Failed to add product to the cart", { id: toastId });
+      toast.error("Fehler beim Hinzufügen des Produkts zum Warenkorb", { id: toastId });
       console.error("Add to cart error:", error);
     }
   };
 
   if (isLoading) return <Loading />;
-  if (error) return <ErrorDisplay message="Failed to fetch product" />;
-  if (!selectedProduct) return <ErrorDisplay message="Product not found" />;
+  if (error) return <ErrorDisplay message="Fehler beim Laden des Produkts" />;
+  if (!selectedProduct) return <ErrorDisplay message="Produkt nicht gefunden" />;
 
   return (
     <div className="container mx-auto px-4 md:py-16 max-w-7xl">

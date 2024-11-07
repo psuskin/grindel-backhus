@@ -29,25 +29,23 @@ const ExtraProductsModal: React.FC<ExtraProductsModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <h3 className="text-lg font-medium mb-4">
-            You&apos;ve selected the designated number of products for this
-            package category.
+            Sie haben die festgelegte Anzahl der Produkte für diese Paketkategorie ausgewählt.
           </h3>
           <p className="text-gray-600 mb-6">
-            Would you wish to proceed to the next category, or would you like to
-            select further products at a fixed price?
+            Möchten Sie zur nächsten Kategorie übergehen oder weitere Produkte zu einem festen Preis auswählen?
           </p>
           <div className="flex justify-end gap-4">
             <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              Continue Selecting
+              Weiter auswählen
             </button>
             <button
               onClick={onNext}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              Next Category
+              Nächste Kategorie
             </button>
           </div>
         </motion.div>

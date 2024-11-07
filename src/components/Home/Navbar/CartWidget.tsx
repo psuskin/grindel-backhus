@@ -57,7 +57,7 @@ const CartWidget = () => {
         ) : (
           <div className="text-sm font-medium w-full flex flex-col">
             <span className="text-gray-600 whitespace-nowrap">
-              {getTotalItems()} items
+              {getTotalItems()} Produkte
             </span>
             <span className="text-green-500 whitespace-nowrap">
               {getTotalPrice()} €

@@ -39,7 +39,7 @@ const ProductList: React.FC<ProductListProps> = ({
     return (
       <div className="col-span-full flex justify-center items-center py-12">
         <p className="text-xl text-gray-600">
-          No products available in this category.
+          Keine Produkte in dieser Kategorie verfügbar.
         </p>
       </div>
     );
@@ -54,7 +54,7 @@ const ProductList: React.FC<ProductListProps> = ({
       <>
         <div className="mb-4 flex justify-between items-center">
           <div className="text-sm text-gray-600">
-            Selected: {currentCount} / {requiredCount} items
+            Ausgewählt: {currentCount} / {requiredCount} Produkte
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -75,7 +75,7 @@ const ProductList: React.FC<ProductListProps> = ({
     <>
       <div className="mb-4 flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          Selected: {currentCount} / {requiredCount} items
+          Ausgewählt: {currentCount} / {requiredCount} Produkte
         </div>
       </div>
 

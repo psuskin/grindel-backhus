@@ -74,12 +74,12 @@ const Cart: React.FC = () => {
       await refetch();
       console.log(response.success);
       if (response.success) {
-        toast.success("Item quantity increased");
+        toast.success("Artikelmenge erhöht");
       } else {
-        toast.error("Failed to update quantity");
+        toast.error("Fehler beim Erhöhen der Artikelmenge");
       }
     } catch (error: any) {
-      toast.error(error.data?.message || "Failed to update quantity");
+      toast.error(error.data?.message || "Fehler beim Erhöhen der Artikelmenge");
     }
   };
 
@@ -94,12 +94,12 @@ const Cart: React.FC = () => {
         await refetch();
 
         if (response.success) {
-          toast.success("Item quantity decreased");
+          toast.success("Artikelmenge verringert");
         } else {
-          toast.error("Failed to update quantity");
+          toast.error("Fehler beim Verringern der Artikelmenge");
         }
       } catch (error: any) {
-        toast.error(error.data?.message || "Failed to update quantity");
+        toast.error(error.data?.message || "Fehler beim Verringern der Artikelmenge");
       }
     } else {
       handleRemove(item);
@@ -115,12 +115,12 @@ const Cart: React.FC = () => {
       await refetch();
 
       if (response.success) {
-        toast.success(response.message || "Item removed from cart");
+        toast.success(response.message || "Artikel aus dem Warenkorb entfernt");
       } else {
-        toast.error(response.message || "Failed to remove item");
+        toast.error(response.message || "Fehler beim Entfernen des Artikels");
       }
     } catch (error: any) {
-      toast.error(error.data?.message || "Failed to remove item");
+      toast.error(error.data?.message || "Fehler beim Entfernen des Artikels");
     }
   };
 
@@ -164,7 +164,7 @@ const Cart: React.FC = () => {
           toast.error(
             `Please select at least ${requiredCount} ${content.name} item${
               requiredCount > 1 ? "s" : ""
-            }. You have selected ${currentCount}.`
+            }. Sie haben ${currentCount} ausgewählt.`
           );
           setIsCheckingOut(false);
           return;
@@ -172,14 +172,14 @@ const Cart: React.FC = () => {
       }
       router.push("/checkout");
     } catch (error) {
-      console.error("Error checking category products:", error);
-      toast.error("Failed to validate cart items. Please try again.");
+      console.error("Fehler beim Validieren der Artikel im Warenkorb:", error);
+      toast.error("Fehler beim Validieren der Artikel im Warenkorb. Bitte versuchen Sie es erneut.");
       setIsCheckingOut(false);
     }
   };
 
   if (isCartLoading) return <Loading />;
-  if (cartError) return <div>Error loading cart data</div>;
+  if (cartError) return <div>Fehler beim Laden der Warenkorb-Daten</div>;
 
   return (
     <div className="min-h-screen py-28 px-4 md:px-8">
@@ -190,7 +190,7 @@ const Cart: React.FC = () => {
         className="lg:container w-full mx-auto"
       >
         <div className="bg-green-50 rounded-2xl shadow-md p-6 md:p-8">
-          <h1 className="text-3xl font-bold mb-8 text-gray-800">Your Cart</h1>
+          <h1 className="text-3xl font-bold mb-8 text-gray-800">Ihr Warenkorb</h1>
 
           {cartItems.length === 0 ? (
             <motion.div
@@ -199,26 +199,26 @@ const Cart: React.FC = () => {
               transition={{ delay: 0.2 }}
               className="text-center py-12"
             >
-              <p className="text-xl text-gray-600 mb-6">Your cart is empty</p>
+              <p className="text-xl text-gray-600 mb-6">Ihr Warenkorb ist leer</p>
               <Link
                 href="/"
                 className="inline-block bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition-colors hover:bg-green-700"
               >
-                Order Now
+                Bestellen
               </Link>
             </motion.div>
           ) : (
             <>
               <div className="hidden md:grid grid-cols-5 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
-                <div className="col-span-2">Product</div>
-                <div className="text-center">Price</div>
-                <div className="text-center">Quantity</div>
+                <div className="col-span-2">Produkt</div>
+                <div className="text-center">Preis</div>
+                <div className="text-center">Menge</div>
                 <div className="text-right">Total</div>
               </div>
               <div className="md:hidden grid grid-cols-3 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
-                <div>Product</div>
-                <div className="text-center">Qty</div>
-                <div className="text-right">Action</div>
+                <div>Produkt</div>
+                <div className="text-center">Menge</div>
+                <div className="text-right">Aktion</div>
               </div>
               <AnimatePresence>
                 {cartItems.map((item: CartItem) => (
@@ -240,11 +240,11 @@ const Cart: React.FC = () => {
               >
                 <div className="text-xl font-bold text-gray-800 mb-4 md:mb-2 space-y-2">
                   <div>
-                    Sub-Total:{" "}
+                    Zwischensumme:{" "}
                     <span className="text-green-600">{subTotal} €</span>
                   </div>
                   <div>
-                    Total:{" "}
+                    Gesamt:{" "}
                     <span className="text-green-600">{totalPrice} €</span>
                   </div>
                 </div>
@@ -258,10 +258,10 @@ const Cart: React.FC = () => {
                   {isCheckingOut ? (
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Checking...</span>
+                      <span>Überprüfung...</span>
                     </div>
                   ) : (
-                    'Proceed to Checkout'
+                    'Weiter zur Kasse'
                   )}
                 </button>
               </motion.div>
@@ -297,7 +297,7 @@ const CartItemWithDetails: React.FC<{
   ) {
     return (
       <div className="flex justify-start items-center py-4 text-red-500">
-        Error loading product details. Please try again later.
+        Fehler beim Laden der Produkt-Details. Bitte versuchen Sie es später erneut.
       </div>
     );
   }

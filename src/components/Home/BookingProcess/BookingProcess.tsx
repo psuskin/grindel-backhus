@@ -36,7 +36,7 @@ const CateringBookingProcess = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center mb-16">
           <h2 className="text-5xl font-bold text-gray-800 mb-6">
-            Buche jetzt Dein Grindel Backhus catering
+            Buche jetzt Dein Grindel Backhus Catering
           </h2>
           <p className="text-xl text-gray-600">
             Catering bestellen war noch nie so einfach! Stelle Dir Dein
@@ -67,7 +67,7 @@ const CateringBookingProcess = () => {
             <p className="text-lg text-gray-600 mb-6">
               Wir liefern Dir für jedes besondere Ereignis bundesweit
               hochwertiges Catering zu einem fairen Preis – vertraue den Grindel
-              Backhus catering Erfahrungen und buche jetzt!
+              Backhus Catering Erfahrungen und buche jetzt!
             </p>
             <button className="bg-green-600 text-white font-semibold py-3 px-8 rounded-full hover:bg-green-700 transition duration-300">
               Jetzt buchen

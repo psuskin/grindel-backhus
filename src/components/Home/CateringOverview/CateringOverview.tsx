@@ -5,7 +5,7 @@ const CateringOverview = () => {
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-center text-gray-800 mb-16">
-          Grindel Backhus catering - Immer Einfach, Jedes Mal!
+          Grindel Backhus Catering - Immer Einfach, Jedes Mal!
         </h1>
 
         <div className="flex flex-col lg:flex-row items-center mb-24">

@@ -31,7 +31,7 @@ const Checkout: React.FC = () => {
   });
 
   if (isPaymentLoading || isCartLoading) return <Loading />;
-  if (paymentError || cartError) return <div className="text-red-500">Error loading data</div>;
+  if (paymentError || cartError) return <div className="text-red-500">Fehler beim Laden der Daten</div>;
 
   const paymentMethods = paymentData?.payment_methods || {};
   const totalItems = cartData?.products?.reduce((sum: number, item: any) => sum + Number(item.quantity), 0) || 0;
@@ -41,10 +41,10 @@ const Checkout: React.FC = () => {
     try {
       await setPaymentMethod({ payment_method: method }).unwrap();
       setCheckoutData({ ...checkoutData, paymentMethod: method });
-      toast.success("Payment method set successfully");
+      toast.success("Zahlungsmethode erfolgreich gesetzt");
       setStep(2);
     } catch (error) {
-      toast.error("Failed to set payment method");
+      toast.error("Fehler beim Setzen der Zahlungsmethode");
     }
   };
 
@@ -52,10 +52,10 @@ const Checkout: React.FC = () => {
     try {
       await setShippingAddress(data).unwrap();
       setCheckoutData({ ...checkoutData, shippingAddress: data });
-      toast.success("Shipping address set successfully");
+      toast.success("Lieferadresse erfolgreich gesetzt");
       setStep(3);
     } catch (error) {
-      toast.error("Failed to set shipping address");
+      toast.error("Fehler beim Setzen der Lieferadresse");
     }
   };
 
@@ -63,10 +63,10 @@ const Checkout: React.FC = () => {
     try {
       await setPaymentAddress(data).unwrap();
       setCheckoutData({ ...checkoutData, paymentAddress: data });
-      toast.success("Payment address set successfully");
+      toast.success("Rechnungsadresse erfolgreich gesetzt");
       setStep(4);
     } catch (error) {
-      toast.error("Failed to set payment address");
+      toast.error("Fehler beim Setzen der Rechnungsadresse");
     }
   };
 
@@ -75,21 +75,21 @@ const Checkout: React.FC = () => {
     try {
       await setShippingMethod({ shipping_method: method }).unwrap();
       setCheckoutData({ ...checkoutData, shippingMethod: method });
-      toast.success("Shipping method set successfully");
+      toast.success("Liefermethode erfolgreich gesetzt");
       setStep(5);
     } catch (error) {
-      toast.error("Failed to set shipping method");
+      toast.error("Fehler beim Setzen der Liefermethode");
     }
   };
   
   
 
   const steps = [
-    { title: "Payment Method", icon: <CreditCard className="w-6 h-6" /> },
-    { title: "Shipping Address", icon: <Truck className="w-6 h-6" /> },
-    { title: "Payment Address", icon: <MapPin className="w-6 h-6" /> },
-    { title: "Shipping Method", icon: <Truck className="w-6 h-6" /> },
-    { title: "Review Order", icon: <CheckCircle className="w-6 h-6" /> },
+    { title: "Zahlungsmethode", icon: <CreditCard className="w-6 h-6" /> },
+    { title: "Lieferadresse", icon: <Truck className="w-6 h-6" /> },
+    { title: "Rechnungsadresse", icon: <MapPin className="w-6 h-6" /> },
+    { title: "Liefermethode", icon: <Truck className="w-6 h-6" /> },
+    { title: "Bestellüberprüfung", icon: <CheckCircle className="w-6 h-6" /> },
   ];
 
   return (
@@ -103,7 +103,7 @@ const Checkout: React.FC = () => {
         >
           <div className="lg:flex">
             <div className="lg:w-1/2 xl:w-3/5 bg-gray-100 p-8 lg:p-12">
-              <h1 className="text-3xl font-bold mb-8 text-gray-800">Checkout</h1>
+              <h1 className="text-3xl font-bold mb-8 text-gray-800">Kasse</h1>
               
               {/* Progress Bar */}
               <div className="mb-12">

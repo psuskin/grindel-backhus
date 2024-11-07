@@ -28,7 +28,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
     try {
       router.push(`/menu/shop?menu=${id}`);
     } catch (error) {
-      console.error("Error selecting package:", error);
+      console.error("Fehler beim Auswählen des Pakets:", error);
     }
   };
 
@@ -52,7 +52,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
           <div className="flex items-center text-white/90 text-sm">
             <Users className="w-4 h-4 mr-1.5" />
             <span>
-              Min. {minimumClients} {minimumClients === 1 ? "person" : "people"}
+              Min. {minimumClients} {minimumClients === 1 ? "Person" : "Personen"}
             </span>
           </div>
         </div>
@@ -65,13 +65,13 @@ const MenuItem: React.FC<MenuItemProps> = ({
           <span className="text-3xl font-bold text-green-600">
             {price.toFixed(2)} €
           </span>
-          <span className="text-sm text-gray-500">/ person</span>
+          <span className="text-sm text-gray-500">/ Person</span>
         </div>
 
         {/* Package Contents with scrollable area if needed */}
         <div className="mb-6">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-            Package Includes
+            Paket beinhaltet
           </h4>
           <MenuContents menuId={id} />
         </div>
@@ -86,7 +86,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
                      active:scale-[0.98] relative overflow-hidden group/button"
           >
             <span className="relative z-10 flex items-center justify-center">
-              Select Package
+              Paket auswählen
             </span>
           </button>
         </div>
@@ -126,7 +126,7 @@ const Menu = () => {
   }
 
   if (error) {
-    return <div>Error loading packages. Please try again later.</div>;
+    return <div>Fehler beim Laden der Pakete. Bitte versuchen Sie es später erneut.</div>;
   }
 
   const packages = Array.isArray(data) ? data : data?.packages || [];
@@ -134,10 +134,10 @@ const Menu = () => {
   return (
     <div className="max-w-7xl min-h-screen mx-auto px-4 py-16 mt-28">
       <h1 className="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-800">
-        Catering Packages
+        Catering Pakete
       </h1>
       <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto text-lg">
-        Choose from our selection of catering packages to suit your event.
+        Wählen Sie aus unserer Auswahl an Catering-Paketen für Ihr Event.
       </p>
       {packages.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
@@ -154,13 +154,12 @@ const Menu = () => {
         </div>
       ) : (
         <p className="text-center text-gray-600">
-          No packages available at the moment.
+          Derzeit sind keine Pakete verfügbar.
         </p>
       )}
       <div className="bg-green-50 rounded-2xl p-8 text-center border border-green-100">
         <p className="text-gray-700 text-lg max-w-3xl mx-auto">
-          Delivery, assembly, cleaning and collection free of charge, throughout
-          Germany! Drinks, equipment and staff can be booked optionally.
+          Lieferung, Aufbau, Reinigung und Abholung kostenlos, in ganz Deutschland! Getränke, Equipment und Personal können optional bestellt werden.
         </p>
       </div>
     </div>

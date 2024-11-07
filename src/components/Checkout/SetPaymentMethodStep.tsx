@@ -29,7 +29,7 @@ const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({ paymentMethods, o
     >
       <h2 className="text-2xl font-semibold mb-6 flex items-center">
         <CreditCard className="w-6 h-6 mr-2 text-green-500" />
-        Select Payment Method
+        Zahlungsmethode auswählen
       </h2>
       <div className="space-y-4 mb-8">
         {Object.entries(paymentMethods).map(([key, method]: any) => (
@@ -61,7 +61,7 @@ const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({ paymentMethods, o
         disabled={isSubmitting || !selectedMethod}
         className="w-full bg-green-500 text-white py-4 rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed"
       >
-        {isSubmitting ? <Loader2 className="animate-spin" /> : "Continue to Shipping"}
+        {isSubmitting ? <Loader2 className="animate-spin" /> : "Weiter zur Lieferung"}
       </button>
     </motion.div>
   );
