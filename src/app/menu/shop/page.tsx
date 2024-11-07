@@ -10,7 +10,7 @@ import Loading from "@/components/Loading";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useGetCartQuery, useGetMenuContentQuery } from "@/services/api";
+import { useGetCartQuery, useGetMenuContentQuery, useGetCategoriesQuery } from "@/services/api";
 import ExtraProductsModal from "@/components/Modals/ExtraProductsModal";
 
 interface MenuContent {
@@ -77,6 +77,8 @@ const Shop = () => {
     return 0;
   };
 
+  const { data: categoriesData } = useGetCategoriesQuery();
+
   useEffect(() => {
     const fetchProducts = async () => {
       if (!currentCategory?.ids) return;
@@ -86,14 +88,26 @@ const Shop = () => {
 
       try {
         const productPromises = currentCategory.ids.map(
-          (id: { toString: () => any }) =>
+          (id: number) =>
             fetch(`/api/get-products-by-category`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ categoryId: id.toString() }),
-            }).then((res) => res.json())
+            }).then(async (res) => {
+              const data = await res.json();
+              if (data.products) {
+                return {
+                  ...data,
+                  products: data.products.map((product: any) => ({
+                    ...product,
+                    category_id: id.toString()
+                  }))
+                };
+              }
+              return data;
+            })
         );
 
         const results = await Promise.all(productPromises);
@@ -233,7 +247,7 @@ const Shop = () => {
           <div className="p-6">
             <ProductList
               products={allProducts}
-              menuContents={[currentCategory]}
+              menuContents={menuContents}
               activeCategoryName={currentCategory?.name}
               currentCount={getCurrentCategoryCount()}
               requiredCount={currentCategory?.count || 0}

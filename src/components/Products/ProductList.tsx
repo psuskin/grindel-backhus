@@ -1,6 +1,7 @@
 import React from "react";
 import ProductCard from "./ProductCard";
-import Loading from "../Loading";
+import { useGetCategoriesQuery } from "@/services/api";
+import { Product } from "@/types/product";
 
 interface MenuContent {
   name: string;
@@ -8,13 +9,17 @@ interface MenuContent {
   count?: number;
 }
 
-interface Product {
-  product_id: string;
-  // Add other product properties as needed
+interface CategoryProduct extends Product {
+  category_id?: string;
+}
+
+interface Category {
+  id: string;
+  title: string;
 }
 
 interface ProductListProps {
-  products: Product[];
+  products: CategoryProduct[];
   menuContents: MenuContent[];
   activeCategoryName?: string;
   currentCount: number;
@@ -28,6 +33,8 @@ const ProductList: React.FC<ProductListProps> = ({
   currentCount,
   requiredCount
 }) => {
+  const { data: categoriesData } = useGetCategoriesQuery();
+  
   if (!products || products.length === 0) {
     return (
       <div className="col-span-full flex justify-center items-center py-12">
@@ -38,6 +45,32 @@ const ProductList: React.FC<ProductListProps> = ({
     );
   }
 
+  const currentContent = menuContents.find(content => content.name === activeCategoryName);
+  const categoryIds = currentContent?.ids || [];
+
+  // one category ID, show all products in a grid
+  if (categoryIds.length === 1) {
+    return (
+      <>
+        <div className="mb-4 flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            Selected: {currentCount} / {requiredCount} items
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {products.map((product) => (
+            <ProductCard
+              key={product.product_id}
+              product={product}
+              activeCategoryName={activeCategoryName || menuContents[0]?.name || ""}
+            />
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  // For multiple category IDs, group products by their IDs
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
@@ -45,14 +78,36 @@ const ProductList: React.FC<ProductListProps> = ({
           Selected: {currentCount} / {requiredCount} items
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {products.map((product: any) => (
-          <ProductCard
-            key={product.product_id}
-            product={product}
-            activeCategoryName={activeCategoryName || menuContents[0]?.name || ""}
-          />
-        ))}
+
+      <div className="space-y-8">
+        {categoryIds.map((categoryId) => {
+          const category = categoriesData?.categories.find(
+            (cat: Category) => cat.id === categoryId.toString()
+          );
+
+          const categoryProducts = products.filter(
+            product => product.category_id === categoryId.toString()
+          );
+
+          if (!categoryProducts.length) return null;
+
+          return (
+            <div key={categoryId} className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-800 border-b pb-2">
+                {category?.title}
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {categoryProducts.map((product) => (
+                  <ProductCard
+                    key={product.product_id}
+                    product={product}
+                    activeCategoryName={activeCategoryName || menuContents[0]?.name || ""}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </>
   );
