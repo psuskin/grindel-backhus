@@ -2,16 +2,11 @@
 
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Users } from "lucide-react";
 import Loading from "@/components/Loading";
-import {
-  useGetPackagesQuery,
-  useGetMenuContentQuery,
-  useGetCartQuery,
-} from "@/services/api";
+import { useGetPackagesQuery } from "@/services/api";
 import { useRouter } from "next/navigation";
-import toast from "sonner";
+import { menuContents } from "@/constants/menuContents";
 
 interface MenuItemProps {
   name: string;
@@ -21,26 +16,6 @@ interface MenuItemProps {
   productId: number;
 }
 
-const MenuContents: React.FC<{ menuId: number }> = ({ menuId }) => {
-  const { data: menuContent } = useGetMenuContentQuery(menuId.toString());
-
-  if (!menuContent?.contents?.length) return null;
-
-  return (
-    <div className="flex-grow">
-      <div className="space-y-2">
-        {menuContent.contents.map((content: any, index: number) => (
-          <div key={index} className="flex items-center text-sm text-gray-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-600 mr-2"></div>
-            <span className="font-medium text-gray-700">{content.count}×</span>
-            <span className="ml-1.5">{content.name}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const MenuItem: React.FC<MenuItemProps> = ({
   name,
   id,
@@ -48,79 +23,97 @@ const MenuItem: React.FC<MenuItemProps> = ({
   minimumClients,
 }) => {
   const router = useRouter();
-  const { data: menuContent, isLoading: isMenuLoading } =
-    useGetMenuContentQuery(id.toString());
-  const { data: cartData, refetch: refetchCart } = useGetCartQuery();
 
   const handleSelectPackage = async () => {
     try {
-      // First, fetch menu content
-      await fetch("/api/get-menu-content", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ menu: id.toString() }),
-      });
-
-      // Wait for cart to update
-      await refetchCart();
-
-      // Verify the correct menu is in cart
-      const updatedCart = await refetchCart().unwrap();
-      if (updatedCart?.cart?.menu?.id === id) {
-        router.push(`/menu/shop?menu=${id}`);
-      } else {
-        console.error("Failed to select package. Please try again.");
-      }
+      router.push(`/menu/shop?menu=${id}`);
     } catch (error) {
       console.error("Error selecting package:", error);
-      console.error("Failed to select package. Please try again.");
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl border border-green-100">
-      <div className="relative h-56">
+    <div className="group flex flex-col justify-between bg-white rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-lg border border-gray-200 h-full">
+      {/* Image Container - Fixed aspect ratio */}
+      <div className="relative w-full aspect-[16/9]">
         <Image
           src="/images/menu.jpg"
           alt={name}
           layout="fill"
           objectFit="cover"
-          className="transition-transform duration-300 group-hover:scale-105"
+          className="transition-transform duration-700 ease-out group-hover:scale-105"
+          priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="text-2xl font-bold text-white">{name}</h3>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80"></div>
+
+        {/* Title and Min Clients */}
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <h3 className="text-2xl font-bold text-white mb-2">{name}</h3>
+          <div className="flex items-center text-white/90 text-sm">
+            <Users className="w-4 h-4 mr-1.5" />
+            <span>
+              Min. {minimumClients} {minimumClients === 1 ? "person" : "people"}
+            </span>
+          </div>
         </div>
       </div>
-      <div className="p-6">
+
+      {/* Content Container with flex-grow to push button to bottom */}
+      <div className="flex flex-col flex-grow p-6">
+        {/* Price Section */}
+        <div className="flex items-baseline gap-2 mb-4">
+          <span className="text-3xl font-bold text-green-600">
+            {price.toFixed(2)} €
+          </span>
+          <span className="text-sm text-gray-500">/ person</span>
+        </div>
+
+        {/* Package Contents with scrollable area if needed */}
         <div className="mb-6">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+            Package Includes
+          </h4>
           <MenuContents menuId={id} />
         </div>
 
-        <div className="flex justify-between items-end mb-6">
-          <div>
-            <div className="text-3xl font-bold text-green-700">
-              {price.toFixed(2)} €
-            </div>
-            <div className="text-sm text-gray-500">per person, plus VAT</div>
-          </div>
-          <div className="flex items-center text-sm text-gray-500">
-            <Users className="w-4 h-4 mr-1" />
-            Min. {minimumClients} {minimumClients === 1 ? "person" : "people"}
-          </div>
+        {/* Button Section - Always at bottom */}
+        <div className="mt-auto pt-4 border-t border-gray-100">
+          <button
+            onClick={handleSelectPackage}
+            className="w-full bg-green-600 text-white py-3.5 rounded-xl font-medium
+                     transition-all duration-300 
+                     hover:bg-green-700 hover:shadow-md hover:shadow-green-600/20
+                     active:scale-[0.98] relative overflow-hidden group/button"
+          >
+            <span className="relative z-10 flex items-center justify-center">
+              Select Package
+            </span>
+          </button>
         </div>
-        <button
-          onClick={handleSelectPackage}
-          disabled={isMenuLoading}
-          className={`block w-full ${
-            isMenuLoading ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"
-          } text-white py-3 px-4 rounded-lg font-semibold transition-colors duration-300 text-center`}
-        >
-          {isMenuLoading ? "Loading..." : "Select Package"}
-        </button>
       </div>
+    </div>
+  );
+};
+
+// Updated MenuContents for consistent spacing
+const MenuContents: React.FC<{ menuId: number }> = ({ menuId }) => {
+  const content = menuContents[menuId];
+
+  if (!content?.contents?.length) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-2">
+      {content.contents.map((content, index) => (
+        <div
+          key={index}
+          className="flex items-center py-2 px-3 rounded-[10px] bg-gray-50"
+        >
+          <div className="mr-3 flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+            {content.count}×
+          </div>
+          <span className="text-gray-700 text-sm">{content.name}</span>
+        </div>
+      ))}
     </div>
   );
 };
@@ -136,15 +129,14 @@ const Menu = () => {
     return <div>Error loading packages. Please try again later.</div>;
   }
 
-  // Ensure packages is an array
   const packages = Array.isArray(data) ? data : data?.packages || [];
-  console.log(packages);
+
   return (
     <div className="max-w-7xl min-h-screen mx-auto px-4 py-16 mt-28">
-      <h1 className="text-5xl font-bold text-center mb-4 text-gray-800">
+      <h1 className="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-800">
         Catering Packages
       </h1>
-      <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto text-lg">
+      <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto text-lg">
         Choose from our selection of catering packages to suit your event.
       </p>
       {packages.length > 0 ? (
@@ -165,7 +157,7 @@ const Menu = () => {
           No packages available at the moment.
         </p>
       )}
-      <div className="bg-green-50 rounded-xl p-8 text-center">
+      <div className="bg-green-50 rounded-2xl p-8 text-center border border-green-100">
         <p className="text-gray-700 text-lg max-w-3xl mx-auto">
           Delivery, assembly, cleaning and collection free of charge, throughout
           Germany! Drinks, equipment and staff can be booked optionally.

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // /menu/shop/page.tsx
 
 "use client";
@@ -37,7 +38,7 @@ const Shop = () => {
   });
 
   const { data: menuContentData, isLoading: isMenuContentLoading } =
-    useGetMenuContentQuery(menuId || "");
+    useGetMenuContentQuery(Number(menuId));
 
   const currentCategory = menuContentData?.contents[activeStep];
   const menuContents = menuContentData?.contents || [];
@@ -115,14 +116,31 @@ const Shop = () => {
     fetchProducts();
   }, [currentCategory?.ids]);
 
+  // for modal watcher
+  useEffect(() => {
+    if (currentCategory) {
+      const currentCount = getCurrentCategoryCount();
+      const requiredCount = currentCategory.count || 0;
+
+      if (currentCount === requiredCount) {
+        setShowExtraProductsModal(true);
+      }
+    }
+
+    const handleShowModal = () => {
+      setShowExtraProductsModal(true);
+    };
+
+    window.addEventListener("showExtraProductsModal", handleShowModal);
+
+    return () => {
+      window.removeEventListener("showExtraProductsModal", handleShowModal);
+    };
+  }, [cartData?.products, currentCategory]);
+
   const handleNext = () => {
     const currentCount = getCurrentCategoryCount();
     const requiredCount = currentCategory?.count || 0;
-
-    if (currentCount === requiredCount) {
-      setShowExtraProductsModal(true);
-      return;
-    }
 
     if (currentCount < requiredCount) {
       toast.error(
@@ -154,18 +172,6 @@ const Shop = () => {
       router.push("/cart");
     }
   };
-
-  // For modal trigger
-  useEffect(() => {
-    const handleShowModal = () => {
-      setShowExtraProductsModal(true);
-    };
-
-    window.addEventListener("showExtraProductsModal", handleShowModal);
-    return () => {
-      window.removeEventListener("showExtraProductsModal", handleShowModal);
-    };
-  }, []);
 
   if (isCartLoading || isMenuContentLoading || isLoadingProducts)
     return <Loading />;

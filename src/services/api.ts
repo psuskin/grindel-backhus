@@ -53,7 +53,7 @@ export const api = createApi({
             query: () => 'get-packages',
             providesTags: ['Packages'],
         }),
-        getMenuContent: builder.query<any, string>({
+        getMenuContent: builder.query<any, number>({
             query: (menuId) => ({
                 url: 'get-menu-content',
                 method: 'POST',

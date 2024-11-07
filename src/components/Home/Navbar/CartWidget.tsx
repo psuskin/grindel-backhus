@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Loader2, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useGetCartQuery } from "@/services/api";
 
 const CartWidget = () => {
@@ -21,7 +21,6 @@ const CartWidget = () => {
     const totalItem = cartData.totals.find((item: { title: string }) => item.title === "Total");
     if (!totalItem) return "0.00";
 
-    // Remove the currency symbol and any non-numeric characters except for the decimal point
     const numericValue = totalItem.text.replace(/[^0-9.]/g, '');
     return parseFloat(numericValue).toFixed(2);
   };
@@ -40,9 +39,8 @@ const CartWidget = () => {
       )}
       <div className="ml-2 hidden lg:block">
         {isLoading ? (
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin text-green-500" />
-            <span className="text-sm font-medium">Loading...</span>
+          <div className="flex items-center">
+            <div className="h-5 w-16 bg-gray-200 animate-pulse rounded"></div>
           </div>
         ) : (
           <div className="text-sm font-medium">
@@ -52,9 +50,9 @@ const CartWidget = () => {
       </div>
       <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none lg:hidden">
         {isLoading ? (
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin text-green-500" />
-            <span className="text-sm font-medium">Loading...</span>
+          <div className="flex flex-col gap-1 min-w-[80px]">
+            <div className="h-4 w-16 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-4 w-12 bg-gray-200 animate-pulse rounded"></div>
           </div>
         ) : (
           <div className="text-sm font-medium w-full flex flex-col">

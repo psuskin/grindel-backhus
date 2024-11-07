@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductItem from "@/components/Products/ProductItem";
@@ -67,7 +67,10 @@ const Cart: React.FC = () => {
   const handleIncrement = async (item: CartItem) => {
     try {
       const newQuantity = Number(item.quantity) + 1;
-      const response = await editProduct({ id: item.cart_id, quantity: newQuantity }).unwrap();
+      const response = await editProduct({
+        id: item.cart_id,
+        quantity: newQuantity,
+      }).unwrap();
       await refetch();
       console.log(response.success);
       if (response.success) {
@@ -84,9 +87,12 @@ const Cart: React.FC = () => {
     if (Number(item.quantity) > 1) {
       try {
         const newQuantity = Number(item.quantity) - 1;
-        const response = await editProduct({ id: item.cart_id, quantity: newQuantity }).unwrap();
+        const response = await editProduct({
+          id: item.cart_id,
+          quantity: newQuantity,
+        }).unwrap();
         await refetch();
-        
+
         if (response.success) {
           toast.success("Item quantity decreased");
         } else {
@@ -102,9 +108,12 @@ const Cart: React.FC = () => {
 
   const handleRemove = async (item: CartItem) => {
     try {
-      const response = await removeProduct({ id: item.cart_id, quantity: 0 }).unwrap();
+      const response = await removeProduct({
+        id: item.cart_id,
+        quantity: 0,
+      }).unwrap();
       await refetch();
-      
+
       if (response.success) {
         toast.success(response.message || "Item removed from cart");
       } else {
@@ -115,11 +124,14 @@ const Cart: React.FC = () => {
     }
   };
 
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
   const handleCheckout = async () => {
+    setIsCheckingOut(true);
     const menuContents = cartData?.cart?.menu?.contents || [];
 
-    for (const content of menuContents) {
-      try {
+    try {
+      for (const content of menuContents) {
         // Fetch products for this category
         const productPromises = content.ids.map((id: number) =>
           fetch(`/api/get-products-by-category`, {
@@ -140,17 +152,13 @@ const Cart: React.FC = () => {
         }, []);
 
         const requiredCount = content.count || 0;
-        // Calculate currentCount from products array
         const currentCount = cartData?.products?.reduce((sum: number, product: any) => {
-          // Check if this product belongs to current category
-          const isInCategory = categoryProducts.some((p: any) => 
-            p.product_id.toString() === product.product_id.toString()
+          const isInCategory = categoryProducts.some(
+            (p: any) => p.product_id.toString() === product.product_id.toString()
           );
-          
+
           return isInCategory ? sum + Number(product.quantity) : sum;
         }, 0) || 0;
-
-        console.log(`Category: ${content.name}, Required: ${requiredCount}, Current: ${currentCount}`); 
 
         if (currentCount < requiredCount) {
           toast.error(
@@ -158,15 +166,16 @@ const Cart: React.FC = () => {
               requiredCount > 1 ? "s" : ""
             }. You have selected ${currentCount}.`
           );
+          setIsCheckingOut(false);
           return;
         }
-      } catch (error) {
-        console.error("Error checking category products:", error);
-        toast.error("Failed to validate cart items. Please try again.");
-        return;
       }
+      router.push("/checkout");
+    } catch (error) {
+      console.error("Error checking category products:", error);
+      toast.error("Failed to validate cart items. Please try again.");
+      setIsCheckingOut(false);
     }
-    router.push("/checkout");
   };
 
   if (isCartLoading) return <Loading />;
@@ -241,9 +250,19 @@ const Cart: React.FC = () => {
                 </div>
                 <button
                   onClick={handleCheckout}
-                  className="inline-block bg-green-600 text-white px-8 py-3 rounded-full font-semibold transition-all hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-1"
+                  disabled={isCheckingOut}
+                  className={`inline-block ${
+                    isCheckingOut ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
+                  } text-white px-8 py-3 rounded-full font-semibold transition-all hover:shadow-lg transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none`}
                 >
-                  Proceed to Checkout
+                  {isCheckingOut ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Checking...</span>
+                    </div>
+                  ) : (
+                    'Proceed to Checkout'
+                  )}
                 </button>
               </motion.div>
             </>
