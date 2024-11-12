@@ -93,11 +93,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
       const currentCategory = cartData?.cart?.menu?.contents?.find(
         (content: any) => content.name === activeCategoryName
       );
-      const requiredCount = currentCategory?.count || 0;
+      
+      if (currentCategory) {
+        const requiredCount = currentCategory.count || 0;
+        const currentCount = (currentCategory.currentCount || 0) + 1;
 
-      const currentCount = (currentCategory?.currentCount || 0) + 1;
-      if (currentCount === requiredCount) {
-        window.dispatchEvent(new CustomEvent("showExtraProductsModal"));
+        if (currentCount >= requiredCount) {
+          window.dispatchEvent(new CustomEvent("showExtraProductsModal", {
+            detail: { categoryName: activeCategoryName }
+          }));
+        }
       }
     } catch (error) {
       console.error("Fehler beim Erhöhen der Menge", error);

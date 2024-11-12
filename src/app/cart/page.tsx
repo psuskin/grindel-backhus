@@ -162,7 +162,7 @@ const Cart: React.FC = () => {
 
         if (currentCount < requiredCount) {
           toast.error(
-            `Please select at least ${requiredCount} ${content.name} item${
+            `Bitte wählen Sie mindestens ${requiredCount} ${content.name} Artikel${
               requiredCount > 1 ? "s" : ""
             }. Sie haben ${currentCount} ausgewählt.`
           );

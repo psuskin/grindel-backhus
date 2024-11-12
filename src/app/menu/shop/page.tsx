@@ -1,9 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-// /menu/shop/page.tsx
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProductList from "@/components/Products/ProductList";
 import Loading from "@/components/Loading";
@@ -28,6 +27,18 @@ const Shop = () => {
   const menuId = searchParams.get("menu");
   const router = useRouter();
   const [showExtraProductsModal, setShowExtraProductsModal] = useState(false);
+  const [categoryStates, setCategoryStates] = useState<{
+    [key: string]: {
+      hasShownModal: boolean;
+      lastCount: number;
+    };
+  }>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`categoryStates-${menuId}`);
+      return saved ? JSON.parse(saved) : {};
+    }
+    return {};
+  });
 
   const {
     data: cartData,
@@ -43,7 +54,8 @@ const Shop = () => {
   const currentCategory = menuContentData?.contents[activeStep];
   const menuContents = menuContentData?.contents || [];
 
-  const getCurrentCategoryCount = () => {
+  // Memoize getCurrentCategoryCount
+  const getCurrentCategoryCount = useCallback(() => {
     if (!currentCategory || !cartData?.cart?.menu?.contents) return 0;
 
     const cartCategory = cartData.cart.menu.contents.find(
@@ -55,9 +67,7 @@ const Shop = () => {
     }
 
     if (cartData.products && cartData.products.length > 0) {
-      const productsResponse = allProducts;
-
-      const validProductIds = productsResponse.map((p) =>
+      const validProductIds = allProducts.map((p) =>
         p.product_id.toString()
       );
 
@@ -66,16 +76,17 @@ const Shop = () => {
           validProductIds.includes(product.product_id)
       );
 
-      const count = categoryProducts.reduce(
+      return categoryProducts.reduce(
         (sum: number, product: any) => sum + Number(product.quantity),
         0
       );
-
-      return count;
     }
 
     return 0;
-  };
+  }, [currentCategory?.name, cartData?.cart?.menu?.contents, cartData?.products, allProducts]);
+
+  // Memoize the current count to prevent infinite loops
+  const currentCount = useMemo(() => getCurrentCategoryCount(), [getCurrentCategoryCount]);
 
   const { data: categoriesData } = useGetCategoriesQuery();
 
@@ -129,28 +140,108 @@ const Shop = () => {
 
     fetchProducts();
   }, [currentCategory?.ids]);
-
-  // for modal watcher
+console.log(currentCategory)
   useEffect(() => {
-    if (currentCategory) {
-      const currentCount = getCurrentCategoryCount();
-      const requiredCount = currentCategory.count || 0;
+    if (currentCategory && !categoryStates[currentCategory.name]) {
+      setCategoryStates(prev => ({
+        ...prev,
+        [currentCategory.name]: {
+          hasShownModal: false,
+          lastCount: currentCount
+        }
+      }));
+    }
+  }, [currentCategory?.name, currentCount]);
 
-      if (currentCount === requiredCount) {
+  // Handle modal visibility and state updates
+  useEffect(() => {
+    if (!currentCategory) return;
+
+    const categoryName = currentCategory.name;
+    const requiredCount = currentCategory.count || 0;
+    const categoryState = categoryStates[categoryName];
+
+    if (categoryState) {
+      // Reset modal state if count drops below requirement
+      if (currentCount < requiredCount) {
+        setCategoryStates(prev => ({
+          ...prev,
+          [categoryName]: {
+            hasShownModal: false,
+            lastCount: currentCount
+          }
+        }));
+      }
+      // Show modal when conditions are met
+      else if (
+        currentCount >= requiredCount && 
+        !categoryState.hasShownModal && 
+        currentCount > categoryState.lastCount
+      ) {
         setShowExtraProductsModal(true);
+        setCategoryStates(prev => ({
+          ...prev,
+          [categoryName]: {
+            hasShownModal: true,
+            lastCount: currentCount
+          }
+        }));
+      }
+      // Update last count
+      else if (currentCount !== categoryState.lastCount) {
+        setCategoryStates(prev => ({
+          ...prev,
+          [categoryName]: {
+            ...prev[categoryName],
+            lastCount: currentCount
+          }
+        }));
       }
     }
+  }, [currentCategory?.name, currentCount]);
+
+
+  useEffect(() => {
+    if (!currentCategory) return;
 
     const handleShowModal = () => {
-      setShowExtraProductsModal(true);
+      const categoryName = currentCategory.name;
+      const requiredCount = currentCategory.count || 0;
+      const categoryState = categoryStates[categoryName];
+      
+      if (currentCount >= requiredCount && !categoryState?.hasShownModal) {
+        setShowExtraProductsModal(true);
+        setCategoryStates(prev => ({
+          ...prev,
+          [categoryName]: {
+            hasShownModal: true,
+            lastCount: currentCount
+          }
+        }));
+      }
     };
 
     window.addEventListener("showExtraProductsModal", handleShowModal);
+    return () => window.removeEventListener("showExtraProductsModal", handleShowModal);
+  }, [currentCategory?.name, currentCount, categoryStates]);
 
+  useEffect(() => {
+    setShowExtraProductsModal(false);
+  }, [activeStep]);
+
+  useEffect(() => {
     return () => {
-      window.removeEventListener("showExtraProductsModal", handleShowModal);
+      if (menuId) {
+        localStorage.removeItem(`categoryStates-${menuId}`);
+      }
     };
-  }, [cartData?.products, currentCategory]);
+  }, [menuId]);
+
+  useEffect(() => {
+    if (menuId) {
+      localStorage.setItem(`categoryStates-${menuId}`, JSON.stringify(categoryStates));
+    }
+  }, [categoryStates, menuId]);
 
   const handleNext = () => {
     const currentCount = getCurrentCategoryCount();
