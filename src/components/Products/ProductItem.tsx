@@ -61,66 +61,70 @@ const ProductItem: React.FC<ProductItemProps> = ({
         <span className="font-medium">{product.name}</span>
       </div>
       <div className="text-center">{formatPrice(product.price)} €</div>
-      <div className="flex items-center justify-center">
-        <motion.div 
-          className="flex items-center bg-green-100 rounded-full p-1"
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.2 }}
-        >
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={onDecrement}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm"
-          >
-            <FiMinus />
-          </motion.button>
-          <div className="relative w-8 h-8 mx-2 overflow-hidden">
-            <AnimatePresence initial={false}>
-              <motion.span
-                key={product.quantity}
-                className="absolute inset-0 flex items-center justify-center"
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 20, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                {product.quantity}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={onIncrement}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm"
-          >
-            <FiPlus />
-          </motion.button>
-        </motion.div>
-      </div>
-      <div className="flex items-center justify-end space-x-2">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={totalPrice}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="hidden md:block font-semibold text-md md:text-lg text-gray-800"
-          >
-            {totalPrice} €
-          </motion.p>
-        </AnimatePresence>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onRemove}
-          className="text-red-500 hover:text-red-600 transition-colors"
-        >
-          <FiTrash2 className="h-5 w-5" />
-        </motion.button>
-      </div>
+      <div className="text-center font-medium">{product.quantity}</div>
+      <div className="text-right font-semibold">{totalPrice} €</div>
     </motion.div>
   );
 };
 
 export default ProductItem;
+
+{
+  /* <div className="flex items-center justify-center">
+<motion.div
+  className="flex items-center bg-green-100 rounded-full p-1"
+  whileHover={{ scale: 1.05 }}
+  transition={{ duration: 0.2 }}
+>
+  <motion.button
+    whileTap={{ scale: 0.95 }}
+    onClick={onDecrement}
+    className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm"
+  >
+    <FiMinus />
+  </motion.button>
+  <div className="relative w-8 h-8 mx-2 overflow-hidden">
+    <AnimatePresence initial={false}>
+      <motion.span
+        key={product.quantity}
+        className="absolute inset-0 flex items-center justify-center"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {product.quantity}
+      </motion.span>
+    </AnimatePresence>
+  </div>
+  <motion.button
+    whileTap={{ scale: 0.95 }}
+    onClick={onIncrement}
+    className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm"
+  >
+    <FiPlus />
+  </motion.button>
+</motion.div>
+</div>
+<div className="flex items-center justify-end space-x-2">
+<AnimatePresence mode="wait">
+  <motion.p
+    key={totalPrice}
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 10 }}
+    transition={{ duration: 0.2 }}
+    className="hidden md:block font-semibold text-md md:text-lg text-gray-800"
+  >
+    {totalPrice} €
+  </motion.p>
+</AnimatePresence>
+<motion.button
+  whileHover={{ scale: 1.1 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={onRemove}
+  className="text-red-500 hover:text-red-600 transition-colors"
+>
+  <FiTrash2 className="h-5 w-5" />
+</motion.button> */
+}

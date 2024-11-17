@@ -9,7 +9,7 @@ import Loading from "@/components/Loading";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useGetCartQuery, useGetMenuContentQuery, useGetCategoriesQuery } from "@/services/api";
+import { useGetCartQuery, useGetMenuContentQuery, useGetCategoriesQuery, useAddPackageMutation } from "@/services/api";
 import ExtraProductsModal from "@/components/Modals/ExtraProductsModal";
 
 interface MenuContent {
@@ -53,6 +53,9 @@ const Shop = () => {
 
   const currentCategory = menuContentData?.contents[activeStep];
   const menuContents = menuContentData?.contents || [];
+
+
+  const [addPackage] = useAddPackageMutation();
 
   // Memoize getCurrentCategoryCount
   const getCurrentCategoryCount = useCallback(() => {
@@ -243,7 +246,7 @@ console.log(currentCategory)
     }
   }, [categoryStates, menuId]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const currentCount = getCurrentCategoryCount();
     const requiredCount = currentCategory?.count || 0;
 
@@ -259,7 +262,13 @@ console.log(currentCategory)
     if (activeStep < menuContents.length - 1) {
       setActiveStep((prevStep) => prevStep + 1);
     } else {
-      router.push("/cart");
+      // This is the last step, call addPackage before proceeding to cart
+      try {
+        await addPackage().unwrap();
+        router.push("/cart");
+      } catch (error) {
+        toast.error("Fehler beim Hinzufügen des Pakets. Bitte versuchen Sie es erneut.");
+      }
     }
   };
 
@@ -269,12 +278,30 @@ console.log(currentCategory)
     }
   };
 
-  const handleModalNext = () => {
+  const handleModalNext = async () => {
+    const currentCount = getCurrentCategoryCount();
+    const requiredCount = currentCategory?.count || 0;
+
+    if (currentCount < requiredCount) {
+      toast.error(
+        `Bitte wählen Sie mindestens ${requiredCount} ${currentCategory.name} Artikel${
+          requiredCount > 1 ? "s" : ""
+        }. Sie haben ${currentCount} ausgewählt.`
+      );
+      return;
+    }
+
     setShowExtraProductsModal(false);
     if (activeStep < menuContents.length - 1) {
       setActiveStep((prevStep) => prevStep + 1);
     } else {
-      router.push("/cart");
+      // Last step, call addPackage before proceeding
+      try {
+        await addPackage().unwrap();
+        router.push("/cart");
+      } catch (error) {
+        toast.error("Fehler beim Hinzufügen des Pakets. Bitte versuchen Sie es erneut.");
+      }
     }
   };
 

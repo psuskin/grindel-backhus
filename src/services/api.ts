@@ -129,6 +129,20 @@ export const api = createApi({
             }),
             invalidatesTags: ['Cart'],
         }),
+        addPackage: builder.mutation<any, void>({
+            query: () => ({
+                url: 'add-package',
+                method: 'POST',
+            }),
+            invalidatesTags: ['Cart'],
+        }),
+        deletePackage: builder.mutation<any, void>({
+            query: () => ({
+                url: 'delete-package',
+                method: 'POST',
+            }),
+            invalidatesTags: ['Cart'],
+        }),
     }),
 });
 
@@ -149,4 +163,6 @@ export const {
     useSetShippingMethodMutation,
     useGetCategoriesQuery,
     useClearCartMutation,
+    useAddPackageMutation,
+    useDeletePackageMutation,
 } = api;

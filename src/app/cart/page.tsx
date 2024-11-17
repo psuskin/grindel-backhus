@@ -10,274 +10,33 @@ import {
   useEditProductMutation,
   useRemoveProductMutation,
   useGetProductByIdQuery,
+  useDeletePackageMutation,
 } from "@/services/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { CartItemSkeleton } from "@/components/Skeletons/CartSkeleton";
-interface CartItem {
-  product_id: number;
+import Image from "next/image";
+interface PackageProduct {
   cart_id: string;
-  name?: string;
-  thumb?: string;
-  price?: string;
-  quantity: number;
-  leadTime?: string;
+  product_id: string;
+  name: string;
+  image: string;
+  quantity: string;
+  price: number;
+  total: number;
 }
 
-const Cart: React.FC = () => {
-  const router = useRouter();
-  const {
-    data: cartData,
-    isLoading: isCartLoading,
-    error: cartError,
-    refetch,
-  } = useGetCartQuery();
-  const [editProduct] = useEditProductMutation();
-  const [removeProduct] = useRemoveProductMutation();
-  console.log(cartData);
-  const cartItems = useMemo(() => {
-    return (
-      cartData?.products?.map((product: CartItem) => ({
-        ...product,
-        price: parseFloat(product.price || "0"),
-      })) || []
-    );
-  }, [cartData]);
-
-  const { subTotal, totalPrice } = useMemo(() => {
-    if (Array.isArray(cartItems)) {
-      const subTotal = cartItems.reduce(
-        (sum, item) => sum + (item.price || 0) * item.quantity,
-        0
-      );
-      const totalItem = cartData?.totals?.find(
-        (item: { title: string }) => item.title === "Total"
-      );
-      const totalPrice = totalItem
-        ? parseFloat(totalItem.text.replace(/[^0-9.]/g, ""))
-        : subTotal;
-      return {
-        subTotal: subTotal.toFixed(2),
-        totalPrice: totalPrice.toFixed(2),
-      };
-    }
-    return { subTotal: "0.00", totalPrice: "0.00" };
-  }, [cartItems, cartData]);
-
-  const handleIncrement = async (item: CartItem) => {
-    try {
-      const newQuantity = Number(item.quantity) + 1;
-      const response = await editProduct({
-        id: item.cart_id,
-        quantity: newQuantity,
-      }).unwrap();
-      await refetch();
-      console.log(response.success);
-      if (response.success) {
-        toast.success("Artikelmenge erhöht");
-      } else {
-        toast.error("Fehler beim Erhöhen der Artikelmenge");
-      }
-    } catch (error: any) {
-      toast.error(error.data?.message || "Fehler beim Erhöhen der Artikelmenge");
-    }
-  };
-
-  const handleDecrement = async (item: CartItem) => {
-    if (Number(item.quantity) > 1) {
-      try {
-        const newQuantity = Number(item.quantity) - 1;
-        const response = await editProduct({
-          id: item.cart_id,
-          quantity: newQuantity,
-        }).unwrap();
-        await refetch();
-
-        if (response.success) {
-          toast.success("Artikelmenge verringert");
-        } else {
-          toast.error("Fehler beim Verringern der Artikelmenge");
-        }
-      } catch (error: any) {
-        toast.error(error.data?.message || "Fehler beim Verringern der Artikelmenge");
-      }
-    } else {
-      handleRemove(item);
-    }
-  };
-
-  const handleRemove = async (item: CartItem) => {
-    try {
-      const response = await removeProduct({
-        id: item.cart_id,
-        quantity: 0,
-      }).unwrap();
-      await refetch();
-
-      if (response.success) {
-        toast.success(response.message || "Artikel aus dem Warenkorb entfernt");
-      } else {
-        toast.error(response.message || "Fehler beim Entfernen des Artikels");
-      }
-    } catch (error: any) {
-      toast.error(error.data?.message || "Fehler beim Entfernen des Artikels");
-    }
-  };
-
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
-
-  const handleCheckout = async () => {
-    setIsCheckingOut(true);
-    const menuContents = cartData?.cart?.menu?.contents || [];
-
-    try {
-      for (const content of menuContents) {
-        // Fetch products for this category
-        const productPromises = content.ids.map((id: number) =>
-          fetch(`/api/get-products-by-category`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ categoryId: id.toString() }),
-          }).then((res) => res.json())
-        );
-
-        const results = await Promise.all(productPromises);
-        const categoryProducts = results.reduce((acc, result) => {
-          if (result.products) {
-            return [...acc, ...result.products];
-          }
-          return acc;
-        }, []);
-
-        const requiredCount = content.count || 0;
-        const currentCount = cartData?.products?.reduce((sum: number, product: any) => {
-          const isInCategory = categoryProducts.some(
-            (p: any) => p.product_id.toString() === product.product_id.toString()
-          );
-
-          return isInCategory ? sum + Number(product.quantity) : sum;
-        }, 0) || 0;
-
-        if (currentCount < requiredCount) {
-          toast.error(
-            `Bitte wählen Sie mindestens ${requiredCount} ${content.name} Artikel${
-              requiredCount > 1 ? "s" : ""
-            }. Sie haben ${currentCount} ausgewählt.`
-          );
-          setIsCheckingOut(false);
-          return;
-        }
-      }
-      router.push("/checkout");
-    } catch (error) {
-      console.error("Fehler beim Validieren der Artikel im Warenkorb:", error);
-      toast.error("Fehler beim Validieren der Artikel im Warenkorb. Bitte versuchen Sie es erneut.");
-      setIsCheckingOut(false);
-    }
-  };
-
-  if (isCartLoading) return <Loading />;
-  if (cartError) return <div>Fehler beim Laden der Warenkorb-Daten</div>;
-
-  return (
-    <div className="min-h-screen py-28 px-4 md:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="lg:container w-full mx-auto"
-      >
-        <div className="bg-green-50 rounded-2xl shadow-md p-6 md:p-8">
-          <h1 className="text-3xl font-bold mb-8 text-gray-800">Ihr Warenkorb</h1>
-
-          {cartItems.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-center py-12"
-            >
-              <p className="text-xl text-gray-600 mb-6">Ihr Warenkorb ist leer</p>
-              <Link
-                href="/"
-                className="inline-block bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition-colors hover:bg-green-700"
-              >
-                Bestellen
-              </Link>
-            </motion.div>
-          ) : (
-            <>
-              <div className="hidden md:grid grid-cols-5 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
-                <div className="col-span-2">Produkt</div>
-                <div className="text-center">Preis</div>
-                <div className="text-center">Menge</div>
-                <div className="text-right">Total</div>
-              </div>
-              <div className="md:hidden grid grid-cols-3 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
-                <div>Produkt</div>
-                <div className="text-center">Menge</div>
-                <div className="text-right">Aktion</div>
-              </div>
-              <AnimatePresence>
-                {cartItems.map((item: CartItem) => (
-                  <CartItemWithDetails
-                    key={item.product_id}
-                    item={item}
-                    onIncrement={handleIncrement}
-                    onDecrement={handleDecrement}
-                    onRemove={handleRemove}
-                  />
-                ))}
-              </AnimatePresence>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-12 flex flex-col md:flex-row justify-between items-center"
-              >
-                <div className="text-xl font-bold text-gray-800 mb-4 md:mb-2 space-y-2">
-                  <div>
-                    Zwischensumme:{" "}
-                    <span className="text-green-600">{subTotal} €</span>
-                  </div>
-                  <div>
-                    Gesamt:{" "}
-                    <span className="text-green-600">{totalPrice} €</span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCheckout}
-                  disabled={isCheckingOut}
-                  className={`inline-block ${
-                    isCheckingOut ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
-                  } text-white px-8 py-3 rounded-full font-semibold transition-all hover:shadow-lg transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none`}
-                >
-                  {isCheckingOut ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Überprüfung...</span>
-                    </div>
-                  ) : (
-                    'Weiter zur Kasse'
-                  )}
-                </button>
-              </motion.div>
-            </>
-          )}
-        </div>
-      </motion.div>
-    </div>
-  );
-};
+interface PackageOrder {
+  package: string;
+  price: number;
+  products: PackageProduct[];
+}
 
 const CartItemWithDetails: React.FC<{
-  item: CartItem;
-  onIncrement: (item: CartItem) => void;
-  onDecrement: (item: CartItem) => void;
-  onRemove: (item: CartItem) => void;
+  item: PackageProduct;
+  onIncrement: (item: PackageProduct) => void;
+  onDecrement: (item: PackageProduct) => void;
+  onRemove: (item: PackageProduct) => void;
 }> = ({ item, onIncrement, onDecrement, onRemove }) => {
   const {
     data: productDetails,
@@ -302,18 +61,295 @@ const CartItemWithDetails: React.FC<{
     );
   }
 
-  const product = {
-    ...item,
-    ...productDetails.products[0],
+  // Transform package product to match ProductItem interface
+  const productForItem = {
+    product_id: parseInt(item.product_id),
+    name: item.name,
+    thumb: item.image,
+    price: item.price,
+    quantity: parseInt(item.quantity),
+    leadTime: productDetails.products[0].leadTime
   };
 
   return (
     <ProductItem
-      product={product}
+      product={productForItem}
       onIncrement={() => onIncrement(item)}
       onDecrement={() => onDecrement(item)}
       onRemove={() => onRemove(item)}
     />
+  );
+};
+
+const Cart: React.FC = () => {
+  const router = useRouter();
+  const {
+    data: cartData,
+    isLoading: isCartLoading,
+    error: cartError,
+    refetch,
+  } = useGetCartQuery();
+  const [editProduct] = useEditProductMutation();
+  const [removeProduct] = useRemoveProductMutation();
+  const [deletePackage] = useDeletePackageMutation();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+
+  // Get all products from packages with proper type checking
+  const cartItems = useMemo(() => {
+    // Ensure packages is always an array
+    const packages = Array.isArray(cartData?.cart?.order) 
+      ? cartData.cart.order 
+      : [];
+    // Only proceed with flatMap if we have packages
+    const allProducts = packages.flatMap((pkg: PackageOrder) => 
+      pkg.products.map((product: PackageProduct) => ({
+        ...product,
+        package_name: pkg.package,
+        package_price: pkg.price,
+        price: product.price.toString(),
+      }))
+    );
+    return allProducts;
+  }, [cartData]);
+
+  const { subTotal, totalPrice } = useMemo(() => {
+    const totalItem = cartData?.totals?.find(
+      (item: { title: string }) => item.title === "Total"
+    );
+    const subTotalItem = cartData?.totals?.find(
+      (item: { title: string }) => item.title === "Sub-Total"
+    );
+
+    return {
+      subTotal: subTotalItem?.text || "0.00€",
+      totalPrice: totalItem?.text || "0.00€",
+    };
+  }, [cartData]);
+
+  const handleIncrement = async (item: PackageProduct) => {
+    try {
+      const newQuantity = Number(item.quantity) + 1;
+      const response = await editProduct({
+        id: item.cart_id,
+        quantity: newQuantity,
+      }).unwrap();
+      await refetch();
+      console.log(response.success);
+      if (response.success) {
+        toast.success("Artikelmenge erhöht");
+      } else {
+        toast.error("Fehler beim Erhöhen der Artikelmenge");
+      }
+    } catch (error: any) {
+      toast.error(error.data?.message || "Fehler beim Erhöhen der Artikelmenge");
+    }
+  };
+
+  const handleDecrement = async (item: PackageProduct) => {
+    if (Number(item.quantity) > 1) {
+      try {
+        const newQuantity = Number(item.quantity) - 1;
+        const response = await editProduct({
+          id: item.cart_id,
+          quantity: newQuantity,
+        }).unwrap();
+        await refetch();
+
+        if (response.success) {
+          toast.success("Artikelmenge verringert");
+        } else {
+          toast.error("Fehler beim Verringern der Artikelmenge");
+        }
+      } catch (error: any) {
+        toast.error(error.data?.message || "Fehler beim Verringern der Artikelmenge");
+      }
+    } else {
+      handleRemove(item);
+    }
+  };
+
+  const handleRemove = async (item: PackageProduct) => {
+    try {
+      const response = await removeProduct({
+        id: item.cart_id,
+        quantity: 0,
+      }).unwrap();
+      await refetch();
+
+      if (response.success) {
+        toast.success(response.message || "Artikel aus dem Warenkorb entfernt");
+      } else {
+        toast.error(response.message || "Fehler beim Entfernen des Artikels");
+      }
+    } catch (error: any) {
+      toast.error(error.data?.message || "Fehler beim Entfernen des Artikels");
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    setIsConfirmingCancel(true);
+    try {
+      await deletePackage().unwrap();
+      toast.success("Bestellung erfolgreich storniert");
+      router.push("/menu");
+    } catch (error) {
+      toast.error("Fehler beim Stornieren der Bestellung");
+      setIsConfirmingCancel(false);
+    }
+  };
+
+  const handleCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      // Add any pre-checkout validation here if needed
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Optional: simulate processing
+      router.push("/checkout");
+    } catch (error) {
+      toast.error("Fehler beim Weiterleiten zur Kasse");
+      setIsProcessing(false);
+    }
+  };
+
+  if (isCartLoading) return <Loading />;
+  if (cartError) return <div>Fehler beim Laden der Warenkorb-Daten</div>;
+
+  return (
+    <div className="min-h-screen py-28 px-4 md:px-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="lg:container w-full mx-auto"
+      >
+        <div className="bg-green-50 rounded-2xl shadow-md p-6 md:p-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Ihr Warenkorb</h1>
+            {cartItems.length > 0 && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Möchten Sie wirklich die gesamte Bestellung stornieren?')) {
+                    handleCancelOrder();
+                  }
+                }}
+                disabled={isConfirmingCancel}
+                className={`flex items-center gap-2 text-red-600 hover:text-red-700 font-medium text-sm transition-colors ${
+                  isConfirmingCancel ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isConfirmingCancel ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    Wird storniert...
+                  </>
+                ) : (
+                  'Bestellung stornieren'
+                )}
+              </button>
+            )}
+          </div>
+
+          {cartItems.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-center py-12"
+            >
+              <p className="text-xl text-gray-600 mb-6">Ihr Warenkorb ist leer</p>
+              <Link
+                href="/menu"
+                className="inline-block bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition-colors hover:bg-green-700"
+              >
+                Menü auswählen
+              </Link>
+            </motion.div>
+          ) : (
+            <>
+              {/* Group products by package */}
+              {cartData?.cart?.order?.map((pkg: PackageOrder, index: number) => (
+                <div key={index} className="mb-8">
+                  <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg">
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      {pkg.package}
+                    </h2>
+                    <span className="text-lg font-bold text-green-600">
+                      {pkg.price}€
+                    </span>
+                  </div>
+
+                  <div className="hidden md:grid grid-cols-5 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
+                    <div className="col-span-2">Produkt</div>
+                    <div className="text-center">Preis</div>
+                    <div className="text-center">Menge</div>
+                    <div className="text-right">Total</div>
+                  </div>
+
+                  <AnimatePresence>
+                    {pkg.products.map((item: PackageProduct) => (
+                      <CartItemWithDetails
+                        key={item.cart_id}
+                        item={item}
+                        onIncrement={handleIncrement}
+                        onDecrement={handleDecrement}
+                        onRemove={handleRemove}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              ))}
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-12 flex flex-col md:flex-row justify-between items-center"
+              >
+                <div className="text-xl font-bold text-gray-800 mb-4 md:mb-2 space-y-2">
+                  <div>
+                    Zwischensumme: <span className="text-green-600">{subTotal}</span>
+                  </div>
+                  <div>
+                    Gesamt: <span className="text-green-600">{totalPrice}</span>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Möchten Sie wirklich die gesamte Bestellung stornieren?')) {
+                        handleCancelOrder();
+                      }
+                    }}
+                    disabled={isConfirmingCancel}
+                    className={`px-6 py-3 text-red-600 hover:text-red-700 font-semibold transition-colors ${
+                      isConfirmingCancel ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {isConfirmingCancel ? 'Wird storniert...' : 'Stornieren'}
+                  </button>
+                  <button
+                    onClick={handleCheckout}
+                    disabled={isProcessing}
+                    className={`inline-block bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold transition-all hover:shadow-lg transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none disabled:opacity-75 ${
+                      isProcessing ? 'cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Wird verarbeitet...</span>
+                      </div>
+                    ) : (
+                      'Weiter zur Kasse'
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
