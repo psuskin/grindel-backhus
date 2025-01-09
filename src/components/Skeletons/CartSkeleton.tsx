@@ -1,34 +1,51 @@
 import React from "react";
+import { ShoppingBag, ChevronLeft } from "lucide-react";
 
 export const CartItemSkeleton = () => {
   return (
-    <div className="border-b border-gray-100 py-4 animate-pulse">
-      <div className="grid md:grid-cols-5 grid-cols-3 gap-4 items-center">
-        {/* Product Image & Name */}
-        <div className="md:col-span-2 flex items-center space-x-4">
-          <div className="w-20 h-20 bg-gray-200 rounded-lg"></div>
-          <div className="flex-1">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </div>
+    <div className="flex items-center py-4 border-b border-gray-200 animate-pulse">
+      {/* Product Image and Quantity Badge */}
+      <div className="flex-shrink-0 mr-4 relative">
+        <div className="w-20 h-20 bg-gray-200 rounded-md"></div>
+        <div className="absolute -top-2 -right-2 w-7 h-7 bg-gray-200 rounded-full"></div>
+      </div>
 
-        {/* Price - Hidden on mobile */}
-        <div className="hidden md:block">
-          <div className="h-4 bg-gray-200 rounded w-20 mx-auto"></div>
-        </div>
+      {/* Product Details */}
+      <div className="flex-grow">
+        <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+        <div className="h-6 bg-gray-200 rounded w-24"></div>
+      </div>
 
-        {/* Quantity Controls */}
-        <div className="flex justify-center items-center space-x-3">
-          <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-          <div className="w-10 h-8 bg-gray-200 rounded"></div>
-          <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-        </div>
+      {/* Total Price */}
+      <div className="flex-shrink-0 ml-4 text-right">
+        <div className="h-6 bg-gray-200 rounded w-20 ml-auto"></div>
+      </div>
+    </div>
+  );
+};
 
-        {/* Total - Hidden on mobile */}
-        <div className="hidden md:block text-right">
-          <div className="h-4 bg-gray-200 rounded w-24 ml-auto"></div>
+const PackageSkeleton = () => {
+  return (
+    <div className="mb-8 bg-white rounded-lg shadow-sm p-6 animate-pulse">
+      {/* Package Header */}
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+        <div>
+          <div className="h-6 bg-gray-200 rounded w-48 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-24"></div>
         </div>
+        <div className="flex items-center gap-4">
+          <div className="h-6 bg-gray-200 rounded w-16"></div>
+          <div className="h-5 w-5 bg-gray-200 rounded-full"></div>
+        </div>
+      </div>
+
+      {/* Category and Items */}
+      <div className="mb-6">
+        <div className="h-5 bg-gray-200 rounded w-32 mb-4"></div>
+        {[1, 2].map((item) => (
+          <CartItemSkeleton key={item} />
+        ))}
       </div>
     </div>
   );
@@ -36,32 +53,56 @@ export const CartItemSkeleton = () => {
 
 const CartSkeleton = () => {
   return (
-    <div className="min-h-screen py-28 px-4 md:px-8">
-      <div className="lg:container w-full mx-auto">
-        <div className="bg-green-50 rounded-2xl shadow-md p-6 md:p-8">
-          {/* Title Skeleton */}
-          <div className="h-8 bg-gray-200 rounded w-40 mb-8"></div>
-
-          {/* Headers */}
-          <div className="hidden md:grid grid-cols-5 gap-4 mb-4 pb-2 border-b">
-            <div className="col-span-2 h-4 bg-gray-200 rounded w-20"></div>
-            <div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div>
-            <div className="h-4 bg-gray-200 rounded w-24 mx-auto"></div>
-            <div className="h-4 bg-gray-200 rounded w-16 ml-auto"></div>
+    <div className="min-h-screen py-24 px-4 md:px-8 bg-gray-50">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+          {/* Header Skeleton */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-4 border-b">
+            <div className="flex items-center mb-4 md:mb-0">
+              <div className="bg-gray-100 p-2 rounded-lg mr-3">
+                <div className="w-6 h-6 bg-gray-200 rounded"></div>
+              </div>
+              <div>
+                <div className="h-8 bg-gray-200 rounded w-32 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-20"></div>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gray-200 rounded-lg mr-2"></div>
+              <div className="h-5 bg-gray-200 rounded w-32"></div>
+            </div>
           </div>
 
-          {/* Cart Items */}
-          {[1, 2, 3].map((index) => (
-            <CartItemSkeleton key={index} />
+          {/* Packages */}
+          {[1, 2].map((pkg) => (
+            <PackageSkeleton key={pkg} />
           ))}
 
-          {/* Totals and Checkout Button */}
-          <div className="mt-12 flex flex-col md:flex-row justify-between items-center">
-            <div className="space-y-4 mb-6 md:mb-0">
-              <div className="h-6 bg-gray-200 rounded w-40"></div>
-              <div className="h-6 bg-gray-200 rounded w-32"></div>
+          {/* Totals */}
+          <div className="mt-12 border-t pt-6">
+            <div className="flex flex-col md:flex-row justify-between items-start">
+              <div className="w-full md:w-auto mb-6 md:mb-0">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center min-w-[240px]">
+                    <div className="h-5 bg-gray-200 rounded w-20"></div>
+                    <div className="h-5 bg-gray-200 rounded w-24"></div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-5 bg-gray-200 rounded w-16"></div>
+                    <div className="h-5 bg-gray-200 rounded w-24"></div>
+                  </div>
+                  <div className="h-px bg-gray-200 my-2"></div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded w-28"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full md:w-auto">
+                <div className="h-14 bg-gray-200 rounded-md w-full md:w-[200px]"></div>
+              </div>
             </div>
-            <div className="h-12 bg-gray-200 rounded-full w-48"></div>
           </div>
         </div>
       </div>

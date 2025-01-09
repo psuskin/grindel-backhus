@@ -7,6 +7,7 @@ import ClientLayout from "./client-layout";
 import Providers from "@/redux/provider";
 import { store } from "@/redux/store";
 import { Toaster } from "sonner";
+import Loading from "@/components/Loading";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,6 +33,7 @@ export default function RootLayout({
             </ClientLayout>
           </main>
           <Footer />
+          {/* <Loading /> */}
         </Providers>
       </body>
     </html>

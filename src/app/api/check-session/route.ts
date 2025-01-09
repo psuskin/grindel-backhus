@@ -1,63 +1,3 @@
-// import { NextRequest, NextResponse } from 'next/server';
-// import axios, { AxiosResponse } from 'axios';
-// import { cookies } from 'next/headers';
-
-// export async function GET(req: NextRequest): Promise<NextResponse> {  // Changed to GET
-//     const cookieStore = cookies();
-//     const session = cookieStore.get('session')?.value;
-//     const ip = req.headers.get('x-real-ip') || '127.0.0.1';
-//     const oldIP = cookieStore.get('ClientIP')?.value;
-
-//     // Set the ClientIP cookie
-//     cookieStore.set('ClientIP', ip);
-
-//     if (session && oldIP && oldIP === ip) {
-//         return NextResponse.json({
-//             sessionData: { success: 'true', api_token: session },
-//             clientIP: ip,
-//         });
-//     } else {
-//         const formData = new URLSearchParams();
-//         formData.append('username', process.env.NEXT_PUBLIC_API_USERNAME || '');
-//         formData.append('key', process.env.NEXT_PUBLIC_API_KEY || '');
-
-//         try {
-//             const response: AxiosResponse<{ api_token: string }> = await axios.post(
-//                 `${process.env.NEXT_PUBLIC_API_ENDPOINT}/account/login`,
-//                 formData,
-//                 {
-//                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-//                 }
-//             );
-
-//             const expireDate = new Date();
-//             expireDate.setHours(expireDate.getHours() + 2);
-
-//             // Set the session cookie with an expiration time
-//             cookieStore.set({
-//                 name: 'session',
-//                 value: response.data.api_token,
-//                 expires: expireDate,
-//                 httpOnly: true,
-//             });
-
-//             return NextResponse.json({
-//                 sessionData: response.data,
-//                 clientIP: ip,
-//             });
-//         } catch (error: any) {
-//             cookieStore.delete('session');
-//             cookieStore.delete('ClientIP');
-
-//             return NextResponse.json(
-//                 { expired: true, error: error.message },
-//                 { status: 403 }
-//             );
-//         }
-//     }
-// }
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import axios, { AxiosResponse } from 'axios';
 import { cookies } from 'next/headers';
@@ -69,60 +9,90 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const oldIP = cookieStore.get('ClientIP')?.value;
 
     // Set the ClientIP cookie
-    cookieStore.set('ClientIP', ip, {
+    const res = new NextResponse();
+    res.cookies.set('ClientIP', ip, {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'lax',
         path: '/',
     });
 
+    // If we have a session and IP matches, verify token validity
     if (session && oldIP && oldIP === ip) {
-        return NextResponse.json({
-            sessionData: { success: 'true', api_token: session },
-            clientIP: ip,
-        });
-    } else {
+        try {
+            // Test the token with a simple API call
+            const testResponse = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_ENDPOINT}/sale/view`,
+                {},
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    params: { api_token: session },
+                }
+            );
+            // Valid response will have totals array and other cart properties
+            if (testResponse.data && testResponse.data.totals) {
+                return NextResponse.json({
+                    sessionData: { success: true, api_token: session },
+                    clientIP: ip,
+                });
+            }
+
+            // If we don't get expected cart data structure, token is likely invalid
+            res.cookies.delete('session');
+            res.cookies.delete('ClientIP');
+        } catch (error) {
+            // If verification fails, delete cookies
+            res.cookies.delete('session');
+            res.cookies.delete('ClientIP');
+        }
+    }
+
+    // Get new session if no session exists or if it was invalid
+    try {
         const formData = new URLSearchParams();
         formData.append('username', process.env.NEXT_PUBLIC_API_USERNAME || '');
         formData.append('key', process.env.NEXT_PUBLIC_API_KEY || '');
 
-        try {
-            const response: AxiosResponse<{ api_token: string }> = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_ENDPOINT}/account/login`,
-                formData,
-                {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                }
-            );
+        const response: AxiosResponse<{ api_token: string }> = await axios.post(
+            `${process.env.NEXT_PUBLIC_API_ENDPOINT}/account/login`,
+            formData,
+            {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            }
+        );
 
-            const expireDate = new Date();
-            expireDate.setHours(expireDate.getHours() + 2);
+        const newRes = NextResponse.json({
+            sessionData: response.data,
+            clientIP: ip,
+        });
 
-            // Set the session cookie with an expiration time
-            const res = NextResponse.json({
-                sessionData: response.data,
-                clientIP: ip,
-            });
+        // Set both session and IP cookies
+        newRes.cookies.set({
+            name: 'session',
+            value: response.data.api_token,
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            path: '/',
+        });
 
-            res.cookies.set({
-                name: 'session',
-                value: response.data.api_token,
-                expires: expireDate,
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none',
-                path: '/',
-            });
+        newRes.cookies.set({
+            name: 'ClientIP',
+            value: ip,
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            path: '/',
+        });
 
-            return res;
-        } catch (error: any) {
-            const res = NextResponse.json(
-                { expired: true, error: error.message },
-                { status: 403 }
-            );
-            res.cookies.delete('session');
-            res.cookies.delete('ClientIP');
-            return res;
-        }
+        return newRes;
+    } catch (error: any) {
+        const errorRes = NextResponse.json(
+            { expired: true, error: error.message },
+            { status: 403 }
+        );
+        errorRes.cookies.delete('session');
+        errorRes.cookies.delete('ClientIP');
+        return errorRes;
     }
 }

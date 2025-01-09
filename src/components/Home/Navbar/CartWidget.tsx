@@ -2,6 +2,10 @@ import React from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useGetCartQuery } from "@/services/api";
+import {
+  calculateExtrasTotal,
+  calculateTotals,
+} from "@/components/Cart/CartPriceCalculation";
 
 const CartWidget = () => {
   const { data: cartData, isLoading, error } = useGetCartQuery();
@@ -9,20 +13,22 @@ const CartWidget = () => {
   const getTotalItems = (): number => {
     if (!cartData || !cartData.products) return 0;
 
-    return cartData.products.reduce((total: number, item: { quantity: any }) => {
-      const quantity = Number(item.quantity);
-      return total + (isNaN(quantity) ? 0 : quantity);
-    }, 0);
+    return cartData.products.reduce(
+      (total: number, item: { quantity: any }) => {
+        const quantity = Number(item.quantity);
+        return total + (isNaN(quantity) ? 0 : quantity);
+      },
+      0
+    );
   };
 
   const getTotalPrice = (): string => {
-    if (!cartData || !cartData.totals) return "0.00";
+    if (!cartData) return "0.00";
 
-    const totalItem = cartData.totals.find((item: { title: string }) => item.title === "Total");
-    if (!totalItem) return "0.00";
+    const extrasTotal = calculateExtrasTotal(cartData);
+    const { totalPrice } = calculateTotals(cartData, extrasTotal);
 
-    const numericValue = totalItem.text.replace(/[^0-9.]/g, '');
-    return parseFloat(numericValue).toFixed(2);
+    return totalPrice.replace(/[^0-9.,]/g, "");
   };
 
   return (

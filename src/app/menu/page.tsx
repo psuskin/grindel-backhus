@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Users } from "lucide-react";
 import Loading from "@/components/Loading";
 import { useGetPackagesQuery } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { menuContents } from "@/constants/menuContents";
+import GuestsCountModal from "@/components/Modals/GuestsCountModal";
 
 interface MenuItemProps {
   name: string;
@@ -23,75 +24,86 @@ const MenuItem: React.FC<MenuItemProps> = ({
   minimumClients,
 }) => {
   const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
 
-  const handleSelectPackage = async () => {
-    try {
-      router.push(`/menu/shop?menu=${id}`);
-    } catch (error) {
-      console.error("Fehler beim Auswählen des Pakets:", error);
-    }
+  const handleSelectPackage = () => {
+    setShowModal(true);
+  };
+
+  const handleGuestCountSubmit = (guestCount: number) => {
+    setShowModal(false);
+    router.push(`/menu/shop?menu=${id}&guests=${guestCount}`);
   };
 
   return (
-    <div className="group flex flex-col justify-between bg-white rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-lg border border-gray-200 h-full">
-      {/* Image Container - Fixed aspect ratio */}
-      <div className="relative w-full aspect-[16/9]">
-        <Image
-          src="/images/menu.jpg"
-          alt={name}
-          layout="fill"
-          objectFit="cover"
-          className="transition-transform duration-700 ease-out group-hover:scale-105"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80"></div>
+    <>
+      <div className="group flex flex-col justify-between bg-white rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-lg border border-gray-200 h-full">
+        {/* Image Container - Fixed aspect ratio */}
+        <div className="relative w-full aspect-[16/9]">
+          <Image
+            src="/images/menu.jpg"
+            alt={name}
+            layout="fill"
+            objectFit="cover"
+            className="transition-transform duration-700 ease-out group-hover:scale-105"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80"></div>
 
-        {/* Title and Min Clients */}
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <h3 className="text-2xl font-bold text-white mb-2">{name}</h3>
-          <div className="flex items-center text-white/90 text-sm">
-            <Users className="w-4 h-4 mr-1.5" />
-            <span>
-              Min. {minimumClients} {minimumClients === 1 ? "Person" : "Personen"}
+          {/* Title and Min Clients */}
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <h3 className="text-2xl font-bold text-white mb-2">{name}</h3>
+            <div className="flex items-center text-white/90 text-sm">
+              <Users className="w-4 h-4 mr-1.5" />
+              <span>
+                Min. {minimumClients} {minimumClients === 1 ? "Person" : "Personen"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Container with flex-grow to push button to bottom */}
+        <div className="flex flex-col flex-grow p-6">
+          {/* Price Section */}
+          <div className="flex items-baseline gap-2 mb-4">
+            <span className="text-3xl font-bold text-green-600">
+              {/* {price?.toFixed(2)} € */}
             </span>
+            <span className="text-sm text-gray-500">/ Person</span>
+          </div>
+
+          {/* Package Contents with scrollable area if needed */}
+          <div className="mb-6">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+              Paket beinhaltet
+            </h4>
+            <MenuContents menuId={id} />
+          </div>
+
+          {/* Button Section - Always at bottom */}
+          <div className="mt-auto pt-4 border-t border-gray-100">
+            <button
+              onClick={handleSelectPackage}
+              className="w-full bg-green-600 text-white py-3.5 rounded-xl font-medium
+                       transition-all duration-300 
+                       hover:bg-green-700 hover:shadow-md hover:shadow-green-600/20
+                       active:scale-[0.98] relative overflow-hidden group/button"
+            >
+              <span className="relative z-10 flex items-center justify-center">
+                Paket auswählen
+              </span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Content Container with flex-grow to push button to bottom */}
-      <div className="flex flex-col flex-grow p-6">
-        {/* Price Section */}
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-3xl font-bold text-green-600">
-            {price.toFixed(2)} €
-          </span>
-          <span className="text-sm text-gray-500">/ Person</span>
-        </div>
-
-        {/* Package Contents with scrollable area if needed */}
-        <div className="mb-6">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-            Paket beinhaltet
-          </h4>
-          <MenuContents menuId={id} />
-        </div>
-
-        {/* Button Section - Always at bottom */}
-        <div className="mt-auto pt-4 border-t border-gray-100">
-          <button
-            onClick={handleSelectPackage}
-            className="w-full bg-green-600 text-white py-3.5 rounded-xl font-medium
-                     transition-all duration-300 
-                     hover:bg-green-700 hover:shadow-md hover:shadow-green-600/20
-                     active:scale-[0.98] relative overflow-hidden group/button"
-          >
-            <span className="relative z-10 flex items-center justify-center">
-              Paket auswählen
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <GuestsCountModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        packageData={{ id, name, minimumClients }}
+        onSubmit={handleGuestCountSubmit}
+      />
+    </>
   );
 };
 

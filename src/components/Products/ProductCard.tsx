@@ -1,3 +1,5 @@
+"use client";
+
 import { Product } from "@/types/product";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,9 +9,12 @@ import {
   useEditProductMutation,
   useRemoveProductMutation,
   useGetCartQuery,
+  useAddExtraMutation,
 } from "@/services/api";
 import { toast } from "sonner";
 import { FiMinus, FiPlus, FiCheck } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
+import { selectIsExtraMode } from "@/redux/slices/extraSlice";
 
 interface ProductCardProps {
   product: Product;
@@ -28,6 +33,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [editProduct] = useEditProductMutation();
   const [removeProduct] = useRemoveProductMutation();
   const { data: cartData, refetch: refetchCart } = useGetCartQuery();
+
+  const dispatch = useDispatch();
+  const isExtraMode = useSelector(selectIsExtraMode);
+  const [addExtra] = useAddExtraMutation();
 
   useEffect(() => {
     const cartItem = cartData?.products?.find(
@@ -57,7 +66,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
       setLocalQuantity(newQuantity);
     } catch (error) {
       console.error("Fehler beim Aktualisieren des Warenkorbs", error);
-      toast.error("Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.", { id: toastId });
+      toast.error(
+        "Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.",
+        { id: toastId }
+      );
     } finally {
       setIsUpdating(false);
       setIsEditing(false);
@@ -78,35 +90,50 @@ const ProductCard: React.FC<ProductCardProps> = ({
     setIsUpdating(true);
     const toastId = toast.loading("Warenkorb aktualisieren...");
     try {
-      const newQuantity = localQuantity + 1;
-      const cartItem = cartData?.products?.find(
-        (item: any) => item.product_id === product.product_id
-      );
-      if (cartItem) {
-        await editProduct({ id: cartItem.cart_id, quantity: newQuantity });
+      if (isExtraMode) {
+        const response = await addExtra({
+          product_id: product.product_id,
+        }).unwrap();
+
+        if (response.success) {
+          toast.success("Extra erfolgreich hinzugefügt", { id: toastId });
+          setLocalQuantity((prev) => prev + 1);
+        }
       } else {
-        await addToCart({ id: product.product_id, quantity: 1 });
+        const newQuantity = localQuantity + 1;
+        const cartItem = cartData?.products?.find(
+          (item: any) => item.product_id === product.product_id
+        );
+
+        if (cartItem) {
+          await editProduct({ id: cartItem.cart_id, quantity: newQuantity });
+        } else {
+          await addToCart({ id: product.product_id, quantity: 1 });
+        }
+
+        setLocalQuantity(newQuantity);
+        toast.success("Produkt zum Warenkorb hinzugefügt", { id: toastId });
       }
-      setLocalQuantity(newQuantity);
-      toast.success("Produkt zum Warenkorb hinzugefügt", { id: toastId });
 
       const currentCategory = cartData?.cart?.menu?.contents?.find(
         (content: any) => content.name === activeCategoryName
       );
-      
+
       if (currentCategory) {
         const requiredCount = currentCategory.count || 0;
         const currentCount = (currentCategory.currentCount || 0) + 1;
 
         if (currentCount >= requiredCount) {
-          window.dispatchEvent(new CustomEvent("showExtraProductsModal", {
-            detail: { categoryName: activeCategoryName }
-          }));
+          window.dispatchEvent(
+            new CustomEvent("showExtraProductsModal", {
+              detail: { categoryName: activeCategoryName },
+            })
+          );
         }
       }
     } catch (error) {
       console.error("Fehler beim Erhöhen der Menge", error);
-      toast.error("Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.", { id: toastId });
+      toast.error("Fehler beim Aktualisieren des Warenkorbs", { id: toastId });
     } finally {
       setIsUpdating(false);
       refetchCart();
@@ -134,9 +161,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
         setLocalQuantity(newQuantity);
       } catch (error) {
         console.error("Fehler beim Verringern der Menge", error);
-        toast.error("Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.", {
-          id: toastId,
-        });
+        toast.error(
+          "Fehler beim Aktualisieren des Warenkorbs. Bitte versuchen Sie es erneut.",
+          {
+            id: toastId,
+          }
+        );
       } finally {
         setIsUpdating(false);
         refetchCart();

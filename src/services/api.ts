@@ -129,17 +129,29 @@ export const api = createApi({
             }),
             invalidatesTags: ['Cart'],
         }),
-        addPackage: builder.mutation<any, void>({
-            query: () => ({
+        addPackage: builder.mutation<any, { guests: number }>({
+            query: (body) => ({
                 url: 'add-package',
                 method: 'POST',
+                body,
             }),
             invalidatesTags: ['Cart'],
         }),
-        deletePackage: builder.mutation<any, void>({
-            query: () => ({
+        deletePackage: builder.mutation<any, { id?: string }>({
+            query: (body) => ({
                 url: 'delete-package',
                 method: 'POST',
+                body: body.id ? { id: body.id.toString() } : {}
+            }),
+            invalidatesTags: ['Cart'],
+        }),
+        addExtra: builder.mutation<any, { product_id: string }>({
+            query: (body) => ({
+                url: 'add-extra',
+                method: 'POST',
+                body: {
+                    product_id: body.product_id.toString()
+                }
             }),
             invalidatesTags: ['Cart'],
         }),
@@ -165,4 +177,5 @@ export const {
     useClearCartMutation,
     useAddPackageMutation,
     useDeletePackageMutation,
+    useAddExtraMutation,
 } = api;

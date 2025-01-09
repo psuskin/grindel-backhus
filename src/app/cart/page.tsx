@@ -3,83 +3,30 @@
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import ProductItem from "@/components/Products/ProductItem";
-import Loading from "@/components/Loading";
 import {
   useGetCartQuery,
   useEditProductMutation,
   useRemoveProductMutation,
-  useGetProductByIdQuery,
   useDeletePackageMutation,
 } from "@/services/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { CartItemSkeleton } from "@/components/Skeletons/CartSkeleton";
-import Image from "next/image";
-interface PackageProduct {
-  cart_id: string;
-  product_id: string;
-  name: string;
-  image: string;
-  quantity: string;
-  price: number;
-  total: number;
-}
-
-interface PackageOrder {
-  package: string;
-  price: number;
-  products: PackageProduct[];
-}
-
-const CartItemWithDetails: React.FC<{
-  item: PackageProduct;
-  onIncrement: (item: PackageProduct) => void;
-  onDecrement: (item: PackageProduct) => void;
-  onRemove: (item: PackageProduct) => void;
-}> = ({ item, onIncrement, onDecrement, onRemove }) => {
-  const {
-    data: productDetails,
-    isLoading,
-    error,
-  } = useGetProductByIdQuery(item.product_id.toString());
-
-  if (isLoading) {
-    return <CartItemSkeleton />;
-  }
-
-  if (
-    error ||
-    !productDetails ||
-    !productDetails.products ||
-    productDetails.products.length === 0
-  ) {
-    return (
-      <div className="flex justify-start items-center py-4 text-red-500">
-        Fehler beim Laden der Produkt-Details. Bitte versuchen Sie es später erneut.
-      </div>
-    );
-  }
-
-  // Transform package product to match ProductItem interface
-  const productForItem = {
-    product_id: parseInt(item.product_id),
-    name: item.name,
-    thumb: item.image,
-    price: item.price,
-    quantity: parseInt(item.quantity),
-    leadTime: productDetails.products[0].leadTime
-  };
-
-  return (
-    <ProductItem
-      product={productForItem}
-      onIncrement={() => onIncrement(item)}
-      onDecrement={() => onDecrement(item)}
-      onRemove={() => onRemove(item)}
-    />
-  );
-};
+import {
+  ShoppingCart,
+  Trash2,
+  Loader2,
+  ArrowLeft,
+  ShoppingBag,
+  ChevronLeft,
+} from "lucide-react";
+import CartPackage from "@/components/Cart/CartPackage";
+import { CartProduct, LoadingState, PackageOrder } from "@/types/packageOrders";
+import {
+  calculateExtrasTotal,
+  calculateTotals,
+  formatExtrasTotal,
+} from "@/components/Cart/CartPriceCalculation";
+import CartSkeleton from "@/components/Skeletons/CartSkeleton";
 
 const Cart: React.FC = () => {
   const router = useRouter();
@@ -91,62 +38,51 @@ const Cart: React.FC = () => {
   } = useGetCartQuery();
   const [editProduct] = useEditProductMutation();
   const [removeProduct] = useRemoveProductMutation();
-  const [deletePackage] = useDeletePackageMutation();
+  const [deletePackage, { isLoading: isDeleting }] = useDeletePackageMutation();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+  const [loadingStates, setLoadingStates] = useState<LoadingState>({});
+  const [deletingPackageId, setDeletingPackageId] = useState<string | null>(
+    null
+  );
 
-  // Get all products from packages with proper type checking
-  const cartItems = useMemo(() => {
-    // Ensure packages is always an array
-    const packages = Array.isArray(cartData?.cart?.order) 
-      ? cartData.cart.order 
-      : [];
-    // Only proceed with flatMap if we have packages
-    const allProducts = packages.flatMap((pkg: PackageOrder) => 
-      pkg.products.map((product: PackageProduct) => ({
-        ...product,
-        package_name: pkg.package,
-        package_price: pkg.price,
-        price: product.price.toString(),
-      }))
-    );
-    return allProducts;
-  }, [cartData]);
+  // Calculate totals
+  const extrasTotal = useMemo(() => calculateExtrasTotal(cartData), [cartData]);
+  const formattedExtrasTotal = useMemo(
+    () => formatExtrasTotal(extrasTotal),
+    [extrasTotal]
+  );
+  const { subTotal, totalPrice } = useMemo(
+    () => calculateTotals(cartData, extrasTotal),
+    [cartData, extrasTotal]
+  );
 
-  const { subTotal, totalPrice } = useMemo(() => {
-    const totalItem = cartData?.totals?.find(
-      (item: { title: string }) => item.title === "Total"
-    );
-    const subTotalItem = cartData?.totals?.find(
-      (item: { title: string }) => item.title === "Sub-Total"
-    );
+  const handleIncrement = async (item: CartProduct) => {
+    if (!item?.cart_id) {
+      toast.error("Ungültiges Produkt");
+      return;
+    }
 
-    return {
-      subTotal: subTotalItem?.text || "0.00€",
-      totalPrice: totalItem?.text || "0.00€",
-    };
-  }, [cartData]);
+    setLoadingStates((prev) => ({ ...prev, [item.cart_id]: true }));
 
-  const handleIncrement = async (item: PackageProduct) => {
     try {
       const newQuantity = Number(item.quantity) + 1;
       const response = await editProduct({
         id: item.cart_id,
         quantity: newQuantity,
       }).unwrap();
+
       await refetch();
-      console.log(response.success);
       if (response.success) {
         toast.success("Artikelmenge erhöht");
-      } else {
-        toast.error("Fehler beim Erhöhen der Artikelmenge");
       }
-    } catch (error: any) {
-      toast.error(error.data?.message || "Fehler beim Erhöhen der Artikelmenge");
+    } catch (error) {
+      toast.error("Fehler beim Erhöhen der Artikelmenge");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [item.cart_id]: false }));
     }
   };
 
-  const handleDecrement = async (item: PackageProduct) => {
+  const handleDecrement = async (item: CartProduct) => {
     if (Number(item.quantity) > 1) {
       try {
         const newQuantity = Number(item.quantity) - 1;
@@ -158,18 +94,16 @@ const Cart: React.FC = () => {
 
         if (response.success) {
           toast.success("Artikelmenge verringert");
-        } else {
-          toast.error("Fehler beim Verringern der Artikelmenge");
         }
-      } catch (error: any) {
-        toast.error(error.data?.message || "Fehler beim Verringern der Artikelmenge");
+      } catch (error) {
+        toast.error("Fehler beim Verringern der Artikelmenge");
       }
     } else {
       handleRemove(item);
     }
   };
 
-  const handleRemove = async (item: PackageProduct) => {
+  const handleRemove = async (item: CartProduct) => {
     try {
       const response = await removeProduct({
         id: item.cart_id,
@@ -178,32 +112,60 @@ const Cart: React.FC = () => {
       await refetch();
 
       if (response.success) {
-        toast.success(response.message || "Artikel aus dem Warenkorb entfernt");
-      } else {
-        toast.error(response.message || "Fehler beim Entfernen des Artikels");
+        toast.success("Artikel entfernt");
       }
-    } catch (error: any) {
-      toast.error(error.data?.message || "Fehler beim Entfernen des Artikels");
+    } catch (error) {
+      toast.error("Fehler beim Entfernen des Artikels");
     }
   };
 
-  const handleCancelOrder = async () => {
-    setIsConfirmingCancel(true);
+  const handleDeletePackage = async (
+    packageId: string,
+    packageName: string
+  ) => {
     try {
-      await deletePackage().unwrap();
-      toast.success("Bestellung erfolgreich storniert");
-      router.push("/menu");
+      setDeletingPackageId(packageId);
+      await deletePackage({ id: packageId }).unwrap();
+      toast.success(`${packageName} wurde entfernt`);
+      await refetch();
     } catch (error) {
-      toast.error("Fehler beim Stornieren der Bestellung");
-      setIsConfirmingCancel(false);
+      toast.error("Fehler beim Entfernen des Pakets");
+    } finally {
+      setDeletingPackageId(null);
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (window.confirm("Möchten Sie wirklich den gesamten Warenkorb leeren?")) {
+      try {
+        await deletePackage({}).unwrap();
+        toast.success("Warenkorb wurde erfolgreich geleert");
+      } catch (error) {
+        toast.error("Fehler beim Leeren des Warenkorbs");
+      }
     }
   };
 
   const handleCheckout = async () => {
     setIsProcessing(true);
     try {
-      // Add any pre-checkout validation here if needed
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Optional: simulate processing
+      const formattedPackages = Array.isArray(cartData?.cart?.order)
+        ? cartData.cart.order
+        : Object.values(cartData?.cart?.order || {});
+
+      const packagesWithGuests = formattedPackages.map((pkg: any) => ({
+        ...pkg,
+        guests: pkg.guests || null,
+      }));
+
+      localStorage.setItem(
+        "checkoutData",
+        JSON.stringify({
+          packages: packagesWithGuests,
+          totals: cartData?.totals,
+        })
+      );
+
       router.push("/checkout");
     } catch (error) {
       toast.error("Fehler beim Weiterleiten zur Kasse");
@@ -211,146 +173,164 @@ const Cart: React.FC = () => {
     }
   };
 
-  if (isCartLoading) return <Loading />;
-  if (cartError) return <div>Fehler beim Laden der Warenkorb-Daten</div>;
+  if (isCartLoading) return <CartSkeleton />;
+  if (cartError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl text-red-500 mb-2">
+            Fehler beim Laden des Warenkorbs
+          </h2>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-first text-black rounded-xl"
+          >
+            Erneut versuchen
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const cartItems = Array.isArray(cartData?.cart?.order)
+    ? cartData.cart.order
+    : Object.values(cartData?.cart?.order || {});
 
   return (
-    <div className="min-h-screen py-28 px-4 md:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="lg:container w-full mx-auto"
-      >
-        <div className="bg-green-50 rounded-2xl shadow-md p-6 md:p-8">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Ihr Warenkorb</h1>
-            {cartItems.length > 0 && (
-              <button
-                onClick={() => {
-                  if (window.confirm('Möchten Sie wirklich die gesamte Bestellung stornieren?')) {
-                    handleCancelOrder();
-                  }
-                }}
-                disabled={isConfirmingCancel}
-                className={`flex items-center gap-2 text-red-600 hover:text-red-700 font-medium text-sm transition-colors ${
-                  isConfirmingCancel ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {isConfirmingCancel ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                    Wird storniert...
-                  </>
-                ) : (
-                  'Bestellung stornieren'
-                )}
-              </button>
-            )}
+    <div className="min-h-screen py-24 px-4 md:px-8 bg-gray-50">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+          {/* Cart Header - New Design */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-4 border-b">
+            <div className="flex items-center mb-4 md:mb-0">
+              <div className="bg-green-50 p-2 rounded-lg mr-3">
+                <ShoppingBag className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-medium text-gray-800">
+                  Your Cart
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  {cartItems.length} {cartItems.length === 1 ? "Paket" : "Pakete"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push("/menu")}
+              className="group flex items-center text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
+            >
+              <div className="flex items-center justify-center bg-gray-50 group-hover:bg-green-50 w-8 h-8 rounded-lg mr-2 transition-colors">
+                <ArrowLeft className="h-4 w-4" />
+              </div>
+              Continue Shopping
+            </button>
           </div>
 
           {cartItems.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-center py-12"
-            >
-              <p className="text-xl text-gray-600 mb-6">Ihr Warenkorb ist leer</p>
-              <Link
-                href="/menu"
-                className="inline-block bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition-colors hover:bg-green-700"
-              >
-                Menü auswählen
-              </Link>
-            </motion.div>
+            <EmptyCart />
           ) : (
             <>
-              {/* Group products by package */}
-              {cartData?.cart?.order?.map((pkg: PackageOrder, index: number) => (
-                <div key={index} className="mb-8">
-                  <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg">
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {pkg.package}
-                    </h2>
-                    <span className="text-lg font-bold text-green-600">
-                      {pkg.price}€
-                    </span>
-                  </div>
+              <AnimatePresence mode="wait">
+                {cartItems.map((pkg: PackageOrder, index: number) => (
+                  <CartPackage
+                    key={`${pkg.package}-${index}`}
+                    pkg={pkg}
+                    cartData={cartData}
+                    onIncrement={handleIncrement} //This and below need to be filled in from original code
+                    onDecrement={handleDecrement}
+                    onRemove={handleRemove}
+                    loadingStates={loadingStates}
+                    isDeleting={isDeleting && deletingPackageId === pkg.id}
+                    handleDeletePackage={() =>
+                      handleDeletePackage(pkg.id!, pkg.package)
+                    }
+                  />
+                ))}
+              </AnimatePresence>
 
-                  <div className="hidden md:grid grid-cols-5 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
-                    <div className="col-span-2">Produkt</div>
-                    <div className="text-center">Preis</div>
-                    <div className="text-center">Menge</div>
-                    <div className="text-right">Total</div>
-                  </div>
-
-                  <AnimatePresence>
-                    {pkg.products.map((item: PackageProduct) => (
-                      <CartItemWithDetails
-                        key={item.cart_id}
-                        item={item}
-                        onIncrement={handleIncrement}
-                        onDecrement={handleDecrement}
-                        onRemove={handleRemove}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              ))}
-
+              {/* Totals and Actions */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="mt-12 flex flex-col md:flex-row justify-between items-center"
+                className="mt-12 border-t pt-6"
               >
-                <div className="text-xl font-bold text-gray-800 mb-4 md:mb-2 space-y-2">
-                  <div>
-                    Zwischensumme: <span className="text-green-600">{subTotal}</span>
-                  </div>
-                  <div>
-                    Gesamt: <span className="text-green-600">{totalPrice}</span>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => {
-                      if (window.confirm('Möchten Sie wirklich die gesamte Bestellung stornieren?')) {
-                        handleCancelOrder();
-                      }
-                    }}
-                    disabled={isConfirmingCancel}
-                    className={`px-6 py-3 text-red-600 hover:text-red-700 font-semibold transition-colors ${
-                      isConfirmingCancel ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    {isConfirmingCancel ? 'Wird storniert...' : 'Stornieren'}
-                  </button>
-                  <button
-                    onClick={handleCheckout}
-                    disabled={isProcessing}
-                    className={`inline-block bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold transition-all hover:shadow-lg transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none disabled:opacity-75 ${
-                      isProcessing ? 'cursor-not-allowed' : ''
-                    }`}
-                  >
-                    {isProcessing ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Wird verarbeitet...</span>
+                <div className="flex flex-col md:flex-row justify-between items-start">
+                  {/* Totals Section */}
+                  <div className="w-full md:w-auto mb-6 md:mb-0">
+                    <h3 className="text-lg font-medium text-gray-800 mb-4">
+                      Order Summary
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center min-w-[240px]">
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span className="text-lg font-medium text-gray-800">
+                          {subTotal}
+                        </span>
                       </div>
-                    ) : (
-                      'Weiter zur Kasse'
-                    )}
-                  </button>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Extras:</span>
+                        <span className="text-lg font-medium text-gray-800">
+                          {formattedExtrasTotal}
+                        </span>
+                      </div>
+                      <div className="h-px bg-gray-200 my-2"></div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-medium text-gray-800">
+                          Total:
+                        </span>
+                        <span className="text-xl font-semibold text-green-600">
+                          {totalPrice}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Checkout Button */}
+                  <div className="w-full md:w-auto">
+                    <button
+                      onClick={handleCheckout}
+                      disabled={isProcessing}
+                      className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px]"
+                    >
+                      {isProcessing ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Processing...</span>
+                        </div>
+                      ) : (
+                        "Proceed to Checkout"
+                      )}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
 
+const EmptyCart = () => {
+  const router = useRouter();
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.2 }}
+      className="text-center py-12"
+    >
+      <p className="text-xl text-gray-600 mb-6">Your cart is empty</p>
+      <button
+        onClick={() => router.push("/menu")}
+        className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
+      >
+        Browse Menu
+      </button>
+    </motion.div>
+  );
+};
 export default Cart;
