@@ -26,6 +26,8 @@ export const CartPackage: React.FC<CartPackageProps> = ({
   isDeleting,
   handleDeletePackage,
 }) => {
+  console.log("Package data:", pkg);
+
   const getGroupedProducts = () => {
     const groupedProducts: { [key: string]: CartProduct[] } = {};
 

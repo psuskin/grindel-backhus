@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useDeletePackageMutation } from "@/services/api";
 
 interface GuestsCountModalProps {
   isOpen: boolean;
@@ -24,18 +25,27 @@ const GuestsCountModal: React.FC<GuestsCountModalProps> = ({
   const [guestCount, setGuestCount] = useState(packageData.minimumClients);
   const [error, setError] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [deletePackage] = useDeletePackageMutation();
 
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (guestCount < packageData.minimumClients) {
       setError(`Mindestens ${packageData.minimumClients} Gäste erforderlich`);
       return;
     }
-    onSubmit(guestCount);
+
+    try {
+      await deletePackage({}).unwrap();
+
+      onSubmit(guestCount);
+    } catch (error) {
+      console.error("Error clearing unfinished packages:", error);
+      onSubmit(guestCount);
+    }
   };
 
   const handleGuestCountChange = (value: string) => {
@@ -61,7 +71,7 @@ const GuestsCountModal: React.FC<GuestsCountModalProps> = ({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-xl relative"
+            className="bg-white rounded-[5px] p-8 max-w-lg w-full shadow-xl relative"
             onClick={(e) => e.stopPropagation()}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

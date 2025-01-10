@@ -67,7 +67,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
           {/* Price Section */}
           <div className="flex items-baseline gap-2 mb-4">
             <span className="text-3xl font-bold text-green-600">
-              {/* {price?.toFixed(2)} € */}
+              {price?.toFixed(2)} €
             </span>
             <span className="text-sm text-gray-500">/ Person</span>
           </div>

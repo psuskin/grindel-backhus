@@ -125,10 +125,12 @@ const Cart: React.FC = () => {
   ) => {
     try {
       setDeletingPackageId(packageId);
+      console.log("Deleting package:", packageId);
       await deletePackage({ id: packageId }).unwrap();
       toast.success(`${packageName} wurde entfernt`);
       await refetch();
     } catch (error) {
+      console.error("Delete package error:", error);
       toast.error("Fehler beim Entfernen des Pakets");
     } finally {
       setDeletingPackageId(null);
@@ -211,7 +213,8 @@ const Cart: React.FC = () => {
                   Your Cart
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
-                  {cartItems.length} {cartItems.length === 1 ? "Paket" : "Pakete"}
+                  {cartItems.length}{" "}
+                  {cartItems.length === 1 ? "Paket" : "Pakete"}
                 </p>
               </div>
             </div>
@@ -237,7 +240,7 @@ const Cart: React.FC = () => {
                     key={`${pkg.package}-${index}`}
                     pkg={pkg}
                     cartData={cartData}
-                    onIncrement={handleIncrement} //This and below need to be filled in from original code
+                    onIncrement={handleIncrement}
                     onDecrement={handleDecrement}
                     onRemove={handleRemove}
                     loadingStates={loadingStates}
