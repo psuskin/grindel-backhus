@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const CateringBookingProcess = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -65,17 +66,23 @@ const CateringBookingProcess = () => {
               Einfach, Schnell, Zuverlässig
             </h3>
             <p className="text-lg text-gray-600 mb-6">
-              Wir liefern Dir für jedes besondere Ereignis bundesweit
+              Wir liefern Dir für jedes besondere Ereignis hamburgweit
               hochwertiges Catering zu einem fairen Preis – vertraue den Grindel
               Backhus Catering Erfahrungen und buche jetzt!
             </p>
-            <button className="bg-green-600 text-white font-semibold py-3 px-8 rounded-full hover:bg-green-700 transition duration-300">
+            {/* <button className="bg-green-600 text-white font-semibold py-3 px-8 rounded-full hover:bg-green-700 transition duration-300">
               Jetzt buchen
-            </button>
+            </button> */}
+            <Link
+              href="/menu"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition duration-150 ease-in-out"
+            >
+              Zum Catering-Shop
+            </Link>
           </div>
         </div>
 
-        <div className="mb-16">
+        {/* <div className="mb-16">
           <h3 className="text-4xl font-bold text-center text-gray-800 mb-12">
             Wie funktioniert Grindel Backhus catering?
           </h3>
@@ -96,9 +103,9 @@ const CateringBookingProcess = () => {
               </motion.div>
             ))}
           </div>
-        </div>
+        </div> */}
 
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -126,7 +133,7 @@ const CateringBookingProcess = () => {
               </button>
             </div>
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );

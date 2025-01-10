@@ -85,10 +85,10 @@ const Checkout: React.FC = () => {
   
 
   const steps = [
-    { title: "Zahlungsmethode", icon: <CreditCard className="w-6 h-6" /> },
+    // { title: "Zahlungsmethode", icon: <CreditCard className="w-6 h-6" /> },
     { title: "Lieferadresse", icon: <Truck className="w-6 h-6" /> },
     { title: "Rechnungsadresse", icon: <MapPin className="w-6 h-6" /> },
-    { title: "Liefermethode", icon: <Truck className="w-6 h-6" /> },
+    // { title: "Liefermethode", icon: <Truck className="w-6 h-6" /> },
     { title: "Bestellüberprüfung", icon: <CheckCircle className="w-6 h-6" /> },
   ];
 
@@ -126,35 +126,35 @@ const Checkout: React.FC = () => {
               </div>
 
               <AnimatePresence mode="wait">
-                {step === 1 && (
+                {step === 0 && (
                   <PaymentMethodStep
                     paymentMethods={paymentMethods}
                     onSetPaymentMethod={handleSetPaymentMethod}
                   />
                 )}
 
-                {step === 2 && (
+                {step === 1 && (
                   <ShippingAddressStep
                     onSetShippingAddress={handleSetShippingAddress}
                     onBack={() => setStep(1)}
                   />
                 )}
 
-                {step === 3 && (
+                {step === 2 && (
                   <PaymentAddressStep
                     onSetPaymentAddress={handleSetPaymentAddress}
                     onBack={() => setStep(2)}
                   />
                 )}
 
-                {step === 4 && (
+                {step === 0 && (
                   <ShippingMethodStep
                     onSetShippingMethod={handleSetShippingMethod}
                     onBack={() => setStep(3)}
                   />
                 )}
 
-                {step === 5 && (
+                {step === 3 && (
                   <ReviewStep
                     checkoutData={checkoutData}
                     onBack={() => setStep(4)}

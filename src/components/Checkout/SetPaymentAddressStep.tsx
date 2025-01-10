@@ -129,7 +129,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
         />
         {errors.city && <p className="mt-1 text-red-500">{errors.city.message}</p>}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Controller
             name="country_id"
@@ -172,7 +172,7 @@ const PaymentAddressStep: React.FC<PaymentAddressStepProps> = ({ onSetPaymentAdd
           />
           {errors.zone_id && <p className="mt-1 text-red-500">{errors.zone_id.message}</p>}
         </div>
-      </div>
+      </div> */}
       <Controller
         name="payment_address_id"
         control={control}

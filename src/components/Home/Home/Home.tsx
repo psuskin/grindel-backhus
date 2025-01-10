@@ -31,7 +31,7 @@ const Home = () => {
               "Große Auswahl",
               "Klimaneutral",
               "Preisgünstig",
-              "Ab 150 €",
+              "Ab 100 €",
             ].map((feature) => (
               <div
                 key={feature}

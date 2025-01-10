@@ -128,7 +128,7 @@ const Navbar = () => {
               Grindel Backhus
             </Link>
           </div>
-          <div className="hidden md:flex md:items-center md:justify-center md:flex-1">
+          {/* <div className="hidden md:flex md:items-center md:justify-center md:flex-1">
             <NavItem
               title="Catering"
               items={[
@@ -146,7 +146,7 @@ const Navbar = () => {
             />
             <NavItem title="Über uns" />
             <NavItem title="Kontakt" />
-          </div>
+          </div> */}
 
           <div className="flex items-center justify-between">
             <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-gray-800 transition-colors duration-150">

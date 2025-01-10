@@ -210,7 +210,7 @@ const Cart: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-medium text-gray-800">
-                  Your Cart
+                  Deine Bestellung
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
                   {cartItems.length}{" "}
@@ -226,7 +226,7 @@ const Cart: React.FC = () => {
               <div className="flex items-center justify-center bg-gray-50 group-hover:bg-green-50 w-8 h-8 rounded-lg mr-2 transition-colors">
                 <ArrowLeft className="h-4 w-4" />
               </div>
-              Continue Shopping
+              Weiter bestellen
             </button>
           </div>
 
@@ -263,11 +263,11 @@ const Cart: React.FC = () => {
                   {/* Totals Section */}
                   <div className="w-full md:w-auto mb-6 md:mb-0">
                     <h3 className="text-lg font-medium text-gray-800 mb-4">
-                      Order Summary
+                      Bestellungsübersicht
                     </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center min-w-[240px]">
-                        <span className="text-gray-600">Subtotal:</span>
+                        <span className="text-gray-600">Paketinhalte:</span>
                         <span className="text-lg font-medium text-gray-800">
                           {subTotal}
                         </span>
@@ -281,7 +281,7 @@ const Cart: React.FC = () => {
                       <div className="h-px bg-gray-200 my-2"></div>
                       <div className="flex justify-between items-center">
                         <span className="text-lg font-medium text-gray-800">
-                          Total:
+                          Gesamtsumme:
                         </span>
                         <span className="text-xl font-semibold text-green-600">
                           {totalPrice}
@@ -303,7 +303,7 @@ const Cart: React.FC = () => {
                           <span>Processing...</span>
                         </div>
                       ) : (
-                        "Proceed to Checkout"
+                        "Bestellung aufgeben"
                       )}
                     </button>
                   </div>

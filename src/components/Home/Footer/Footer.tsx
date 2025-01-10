@@ -16,7 +16,7 @@ const Footer = () => {
           {/* About Section */}
           <div className="space-y-4">
             <h3 className="text-3xl font-bold text-green-600">
-              Grindel Backhaus
+              Grindel Backhus
             </h3>
             <p className="text-gray-300 leading-relaxed">
               Frische Backwaren und gemütliche Atmosphäre im Herzen von Hamburg.
@@ -24,22 +24,16 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4 pt-4">
               <a
-                href="#"
+                href="https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FGrindelbackhus%2F"
                 className="text-green-600 hover:text-white transition duration-300"
               >
                 <FaFacebookF size={24} />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/grindel_backhus/"
                 className="text-green-600 hover:text-white transition duration-300"
               >
                 <FaInstagram size={24} />
-              </a>
-              <a
-                href="#"
-                className="text-green-600 hover:text-white transition duration-300"
-              >
-                <FaTwitter size={24} />
               </a>
             </div>
           </div>
@@ -50,7 +44,7 @@ const Footer = () => {
               Schnelllinks
             </h4>
             <ul className="space-y-3">
-              {["Startseite", "Unser Menü", "Über uns", "Kontakt"].map(
+              {/* {["Startseite", "Unser Menü", "Über uns", "Kontakt"].map(
                 (item) => (
                   <li key={item}>
                     <Link
@@ -61,7 +55,15 @@ const Footer = () => {
                     </Link>
                   </li>
                 )
-              )}
+              )} */}
+              <li key={"Home"}>
+                <Link
+                  href={`/`}
+                  className="text-gray-300 hover:text-green-600 transition duration-300 flex items-center"
+                >
+                  <span className="mr-2">›</span> {"Home"}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -72,9 +74,7 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               {[
-                { day: "Montag - Freitag", hours: "7:00 - 19:00" },
-                { day: "Samstag", hours: "8:00 - 18:00" },
-                { day: "Sonntag", hours: "9:00 - 16:00" },
+                { day: "Montag - Sonntag", hours: "6:00 - 18:00" },
               ].map((item) => (
                 <li
                   key={item.day}
@@ -96,10 +96,10 @@ const Footer = () => {
               {[
                 {
                   icon: <FaMapMarkerAlt />,
-                  text: "Grindelberg 7, 20144 Hamburg",
+                  text: "Osterbekstraße 60, 22083 Hamburg",
                 },
-                { icon: <FaPhoneAlt />, text: "040 12345678" },
-                { icon: <FaEnvelope />, text: "info@grindelbackhaus.de" },
+                { icon: <FaPhoneAlt />, text: "040 27164358" },
+                { icon: <FaEnvelope />, text: "info@grindelbackhus.de" },
               ].map((item, index) => (
                 <li key={index} className="flex items-center text-gray-300">
                   <span className="mr-3 text-green-600">{item.icon}</span>
@@ -113,7 +113,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
           <p>
-            © {new Date().getFullYear()} Grindel Backhaus. Alle Rechte
+            © {new Date().getFullYear()} Grindel Backhus. Alle Rechte
             vorbehalten.
           </p>
         </div>

@@ -17,6 +17,10 @@ interface MenuItemProps {
   productId: number;
 }
 
+const getImageSrc = (id: number) => {
+  return `/images/package${id}.jpg`;
+};
+
 const MenuItem: React.FC<MenuItemProps> = ({
   name,
   id,
@@ -41,7 +45,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
         {/* Image Container - Fixed aspect ratio */}
         <div className="relative w-full aspect-[16/9]">
           <Image
-            src="/images/menu.jpg"
+            src={getImageSrc(id)}
             alt={name}
             layout="fill"
             objectFit="cover"
@@ -169,11 +173,11 @@ const Menu = () => {
           Derzeit sind keine Pakete verfügbar.
         </p>
       )}
-      <div className="bg-green-50 rounded-2xl p-8 text-center border border-green-100">
+      {/* <div className="bg-green-50 rounded-2xl p-8 text-center border border-green-100">
         <p className="text-gray-700 text-lg max-w-3xl mx-auto">
           Lieferung, Aufbau, Reinigung und Abholung kostenlos, in ganz Deutschland! Getränke, Equipment und Personal können optional bestellt werden.
         </p>
-      </div>
+      </div> */}
     </div>
   );
 };

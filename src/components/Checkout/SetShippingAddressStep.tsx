@@ -124,25 +124,45 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({
           <p className="mt-1 text-red-500">{errors.address_1.message}</p>
         )}
       </div>
-      <div>
-        <Controller
-          name="city"
-          control={control}
-          rules={{ required: "City is required" }}
-          render={({ field }) => (
-            <input
-              {...field}
-              type="text"
-              placeholder="Stadt"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          )}
-        />
-        {errors.city && (
-          <p className="mt-1 text-red-500">{errors.city.message}</p>
-        )}
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Controller
+            name="city"
+            control={control}
+            rules={{ required: "City is required" }}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                placeholder="Stadt"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            )}
+          />
+          {errors.city && (
+            <p className="mt-1 text-red-500">{errors.city.message}</p>
+          )}
+        </div>
+        <div>
+          <Controller
+            name="zone_id"
+            control={control}
+            rules={{ required: "Postcode is required" }}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                placeholder="Postleitzahl"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            )}
+          />
+          {errors.zone_id && (
+            <p className="mt-1 text-red-500">{errors.zone_id.message}</p>
+          )}
+        </div>
+      </div>
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Controller
             name="country_id"
@@ -189,7 +209,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({
             <p className="mt-1 text-red-500">{errors.zone_id.message}</p>
           )}
         </div>
-      </div>
+      </div> */}
       <div className="flex space-x-4">
         <button
           type="button"

@@ -42,7 +42,7 @@ export const CartPackage: React.FC<CartPackageProps> = ({
         if (!Array.isArray(products)) return;
 
         // Find category name from menu contents or fallback
-        let categoryName = "Andere";
+        let categoryName = "Extras";
 
         if (menuContents?.length > 0) {
           // Try to find category in cart menu contents

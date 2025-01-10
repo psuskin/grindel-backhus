@@ -8,7 +8,7 @@ const HomePage = () => {
     <>
       <Home />
       <CateringBookingProcess />
-      <CateringOverview />
+      {/* <CateringOverview /> */}
     </>
   );
 };
