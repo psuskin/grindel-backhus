@@ -31,18 +31,16 @@ const ProductList: React.FC<ProductListProps> = ({
   menuContents,
   activeCategoryName,
   currentCount,
-  requiredCount
+  requiredCount,
 }) => {
   const { data: categoriesData } = useGetCategoriesQuery();
-  
 
-  console.log("currentCount", currentCount)
-  console.log("requiredCount", requiredCount) 
-  console.log("activeCategoryName", activeCategoryName)
-  console.log("products", products)
-  console.log("menuContents", menuContents)
-  console.log("categoriesData", categoriesData)
-  
+  console.log("currentCount", currentCount);
+  console.log("requiredCount", requiredCount);
+  console.log("activeCategoryName", activeCategoryName);
+  console.log("products", products);
+  console.log("menuContents", menuContents);
+  console.log("categoriesData", categoriesData);
 
   if (!products || products.length === 0) {
     return (
@@ -54,7 +52,9 @@ const ProductList: React.FC<ProductListProps> = ({
     );
   }
 
-  const currentContent = menuContents.find(content => content.name === activeCategoryName);
+  const currentContent = menuContents.find(
+    (content) => content.name === activeCategoryName
+  );
   const categoryIds = currentContent?.ids || [];
 
   // one category ID, show all products in a grid
@@ -71,7 +71,11 @@ const ProductList: React.FC<ProductListProps> = ({
             <ProductCard
               key={product.product_id}
               product={product}
-              activeCategoryName={activeCategoryName || menuContents[0]?.name || ""}
+              activeCategoryName={
+                activeCategoryName || menuContents[0]?.name || ""
+              }
+              currentCount={currentCount}
+              requiredCount={requiredCount}
             />
           ))}
         </div>
@@ -95,7 +99,7 @@ const ProductList: React.FC<ProductListProps> = ({
           );
 
           const categoryProducts = products.filter(
-            product => product.category_id === categoryId.toString()
+            (product) => product.category_id === categoryId.toString()
           );
 
           if (!categoryProducts.length) return null;
@@ -110,7 +114,11 @@ const ProductList: React.FC<ProductListProps> = ({
                   <ProductCard
                     key={product.product_id}
                     product={product}
-                    activeCategoryName={activeCategoryName || menuContents[0]?.name || ""}
+                    activeCategoryName={
+                      activeCategoryName || menuContents[0]?.name || ""
+                    }
+                    currentCount={currentCount}
+                    requiredCount={requiredCount}
                   />
                 ))}
               </div>

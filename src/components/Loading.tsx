@@ -3,7 +3,7 @@ import { Utensils } from "lucide-react";
 
 export default function Loading() {
   return (
-    <div className="flex flex-col items-center justify-center h-[50vh] md:h-[70vh]">
+    <div className="flex flex-col items-center justify-center h-[100vh]">
       <div className="relative w-32 h-32">
         <div className="w-full h-full rounded-full border-4 border-gray-200 absolute overflow-hidden">
           <div className="absolute inset-0 bg-green-600 animate-wave" />

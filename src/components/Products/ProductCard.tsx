@@ -19,11 +19,15 @@ import { selectIsExtraMode } from "@/redux/slices/extraSlice";
 interface ProductCardProps {
   product: Product;
   activeCategoryName: string;
+  currentCount: number;
+  requiredCount: number;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
   product,
   activeCategoryName,
+  currentCount,
+  requiredCount,
 }) => {
   const [localQuantity, setLocalQuantity] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
@@ -36,6 +40,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const dispatch = useDispatch();
   const isExtraMode = useSelector(selectIsExtraMode);
+  console.log("Extra mode status:", isExtraMode);
   const [addExtra] = useAddExtraMutation();
 
   useEffect(() => {
@@ -77,18 +82,52 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
+  const validateAndUpdateQuantity = (newQuantity: number) => {
+    if (isExtraMode || activeCategoryName === "Extras") {
+      return true;
+    }
+
+    const remainingAllowed = requiredCount - (currentCount - localQuantity);
+
+    if (newQuantity > remainingAllowed) {
+      toast.error(`Maximum ${remainingAllowed} items allowed`);
+      return false;
+    }
+    return true;
+  };
+
   const handleInputSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newQuantity = parseInt(inputValue);
-    if (!isNaN(newQuantity)) {
-      handleQuantityChange(newQuantity);
+
+    if (!isNaN(newQuantity) && newQuantity >= 0) {
+      if (
+        isExtraMode ||
+        activeCategoryName === "Extras" ||
+        validateAndUpdateQuantity(newQuantity)
+      ) {
+        handleQuantityChange(newQuantity);
+      } else {
+        setInputValue(localQuantity.toString());
+      }
     }
     setIsEditing(false);
   };
 
   const handleIncrement = async () => {
+    const newQuantity = localQuantity + 1;
+
+    if (
+      !isExtraMode &&
+      activeCategoryName !== "Extras" &&
+      !validateAndUpdateQuantity(newQuantity)
+    ) {
+      return;
+    }
+
     setIsUpdating(true);
     const toastId = toast.loading("Warenkorb aktualisieren...");
+
     try {
       if (isExtraMode) {
         const response = await addExtra({
@@ -115,20 +154,22 @@ const ProductCard: React.FC<ProductCardProps> = ({
         toast.success("Produkt zum Warenkorb hinzugefügt", { id: toastId });
       }
 
-      const currentCategory = cartData?.cart?.menu?.contents?.find(
-        (content: any) => content.name === activeCategoryName
-      );
+      if (activeCategoryName !== "Extras") {
+        const currentCategory = cartData?.cart?.menu?.contents?.find(
+          (content: any) => content.name === activeCategoryName
+        );
 
-      if (currentCategory) {
-        const requiredCount = currentCategory.count || 0;
-        const currentCount = (currentCategory.currentCount || 0) + 1;
+        if (currentCategory) {
+          const requiredCount = currentCategory.count || 0;
+          const currentCount = (currentCategory.currentCount || 0) + 1;
 
-        if (currentCount >= requiredCount) {
-          window.dispatchEvent(
-            new CustomEvent("showExtraProductsModal", {
-              detail: { categoryName: activeCategoryName },
-            })
-          );
+          if (currentCount >= requiredCount) {
+            window.dispatchEvent(
+              new CustomEvent("showExtraProductsModal", {
+                detail: { categoryName: activeCategoryName },
+              })
+            );
+          }
         }
       }
     } catch (error) {

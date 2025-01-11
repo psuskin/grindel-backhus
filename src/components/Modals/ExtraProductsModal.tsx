@@ -62,6 +62,7 @@ const ExtraProductsModal: React.FC<ExtraProductsModalProps> = ({ onNext }) => {
   };
 
   const handleContinueSelecting = () => {
+    console.log("Enabling extra mode");
     dispatch(setExtraMode(true));
     dispatch(hideExtraModal());
   };

@@ -19,17 +19,19 @@ export const CartItem: React.FC<CartItemProps> = ({
   onRemove,
   isLoading,
 }) => {
-  if (!item?.cart_id || !item?.product_id || !item?.name) {
-    return null;
-  }
-
   const {
     data: productDetails,
     isLoading: isProductLoading,
     error: productError,
-  } = useGetProductByIdQuery(item.product_id.toString());
+  } = useGetProductByIdQuery(item?.product_id?.toString() || "");
 
-  if (isProductLoading) return <CartItemSkeleton />;
+  if (!item?.cart_id || !item?.product_id || !item?.name) {
+    return null;
+  }
+
+  if (isProductLoading) {
+    return <CartItemSkeleton />;
+  }
 
   if (productError || !productDetails?.products?.[0]) {
     return (
@@ -66,4 +68,3 @@ export const CartItem: React.FC<CartItemProps> = ({
 };
 
 export default CartItem;
-

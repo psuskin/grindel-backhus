@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useGetCartQuery,
@@ -12,12 +11,8 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
-  ShoppingCart,
-  Trash2,
-  Loader2,
   ArrowLeft,
   ShoppingBag,
-  ChevronLeft,
 } from "lucide-react";
 import CartPackage from "@/components/Cart/CartPackage";
 import { CartProduct, LoadingState, PackageOrder } from "@/types/packageOrders";
