@@ -13,9 +13,15 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (data: CheckoutFormData) => {
     try {
+      if (!cartData) {
+        toast.error("Ihr Warenkorb ist leer");
+        return;
+      }
+
       console.log("Submitting order with data:", {
         customerInfo: data,
         cartData: cartData,
+        deliveryFee: data.deliveryFee,
       });
 
       const response = await fetch("/api/submit-order", {
@@ -26,6 +32,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           customerInfo: data,
           cartData,
+          deliveryFee: data.deliveryFee,
         }),
       });
 

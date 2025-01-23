@@ -168,50 +168,48 @@ export const generateOrderPDF = async ({
                 )
             ]);
 
-            // Get menu contents either from API or fallback
+            // Get menu contents with proper fallback
             const menuId = getPackageMenuId(pkg.package);
-            const menuContents =
-                orderData.menu?.contents ||
-                (menuId ? MENU_CONTENTS[menuId] : []);
+            const menuContents = menuId ? MENU_CONTENTS[menuId] : [];
 
-            // Get extra category IDs
-            const extraIds = menuContents?.find(
-                content => content.name === "Extras"
-            )?.ids || ["73", "74"];
+            // Initialize extras IDs with fallback
+            const extraIds = menuContents
+                .find(content => content.name === "Extras")?.ids || [73, 74];
 
-            // Process products
+            // Process products with null checks
             if (pkg.products) {
-                // Group products by category
-                const groupedProducts: { [key: string]: Array<Product> } = {};
+                const groupedProducts: { [key: string]: Product[] } = {};
 
                 Object.entries(pkg.products).forEach(([categoryId, products]) => {
-                    if (Array.isArray(products)) {
-                        // Get category name from menu contents
-                        let categoryName = "Andere";
-                        const category = menuContents?.find((content) =>
+                    let categoryName = "Andere";  // Default category name
+
+                    // Safely find category
+                    if (menuContents && Array.isArray(menuContents)) {
+                        const category = menuContents.find(content =>
+                            content.ids && Array.isArray(content.ids) &&
                             content.ids.includes(parseInt(categoryId))
                         );
                         if (category?.name) {
                             categoryName = category.name;
                         }
+                    }
 
-                        // Initialize category array if needed
-                        if (!groupedProducts[categoryName]) {
-                            groupedProducts[categoryName] = [];
-                        }
+                    // Initialize category array if needed
+                    if (!groupedProducts[categoryName]) {
+                        groupedProducts[categoryName] = [];
+                    }
 
+                    // Process products safely
+                    if (Array.isArray(products)) {
                         products.forEach((product) => {
-                            // Calculate totals
-                            const quantity = Number(product.quantity);
+                            const quantity = Number(product.quantity) || 0;
                             if (quantity >= 5 && quantity % 5 === 0 && product.price > 0) {
-                                productsOver5Total += product.total;
+                                productsOver5Total += product.total || 0;
                             }
-                            // Add to extras total if in extra categories and not ≥10
-                            else if (extraIds.includes(parseInt(categoryId) as never)) {
+                            else if (extraIds.includes(parseInt(categoryId))) {
                                 extrasTotal += product.total || 0;
                             }
 
-                            // Add to grouped products for display
                             groupedProducts[categoryName].push(product);
                         });
                     }
@@ -316,23 +314,26 @@ export const generateOrderPDF = async ({
     doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
     doc.text(`Zwischensumme:`, 20, finalY + 10);
     doc.text(`Extras:`, 20, finalY + 20);
+    doc.text(`Liefergebühr:`, 20, finalY + 30);
 
     // Right-aligned amounts
     doc.setFont('helvetica', 'bold');
     doc.text(`${calculatedSubTotal.toFixed(2)}€`, 185, finalY + 10, { align: 'right' });
     doc.text(`${extrasTotal.toFixed(2)}€`, 185, finalY + 20, { align: 'right' });
+    doc.text(`${customerInfo.deliveryFee?.toFixed(2) || '0.00'}€`, 185, finalY + 30, { align: 'right' });
 
     // Final total with green color
     doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    doc.roundedRect(15, finalY + 25, 180, 0.5, 0, 0, 'F');  // Separator line
+    doc.roundedRect(15, finalY + 35, 180, 0.5, 0, 0, 'F');  // Separator line
 
     doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     doc.setFontSize(12);
-    doc.text(`Gesamtbetrag:`, 20, finalY + 33);
-    doc.text(`${(calculatedSubTotal + extrasTotal).toFixed(2)}€`, 185, finalY + 33, { align: 'right' });
+    doc.text(`Gesamtbetrag:`, 20, finalY + 43);
+    const finalTotal = calculatedSubTotal + extrasTotal + (customerInfo.deliveryFee || 0);
+    doc.text(`${finalTotal.toFixed(2)}€`, 185, finalY + 43, { align: 'right' });
 
-    // Modern footer with logo and info
-    const footerY = doc.internal.pageSize.height - 25;
+    // Modern footer with more spacing from total
+    const footerY = doc.internal.pageSize.height - 35; // Increased spacing from 25 to 35
 
     // Footer separator
     doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
@@ -350,8 +351,8 @@ export const generateOrderPDF = async ({
     // Contact information
     doc.setFont('helvetica', 'normal');
     doc.text([
-        'Möllner Landstraße 3',
-        '20144 Hamburg'
+        'Grindelhof 11',
+        '20146 Hamburg'
     ], 15, footerY + 12, { lineHeightFactor: 1.2 });
 
     // Contact details on the right

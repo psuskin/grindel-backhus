@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   useForm,
   Controller,
@@ -27,21 +27,94 @@ export interface CheckoutFormData {
   address: string;
   city: string;
   postalCode: string;
+  deliveryFee?: number;
+}
+
+interface DeliveryResponse {
+  success: boolean;
+  isDeliveryAvailable: boolean;
+  message: string;
+  deliveryFee?: number;
+  fullAddress?: string;
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
+  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
+  const [deliveryInfo, setDeliveryInfo] = useState<{
+    isValid: boolean;
+    fee: number | null;
+    message: string;
+    status: "success" | "warning" | "error";
+  } | null>(null);
+
   const methods = useForm<CheckoutFormData>();
   const {
     handleSubmit,
+    watch,
     formState: { isSubmitting },
   } = methods;
 
+  const address = watch("address");
+  const city = watch("city");
+  const postalCode = watch("postalCode");
+
+  // Validate delivery address when address fields change
+  useEffect(() => {
+    const validateDelivery = async () => {
+      if (address && city && postalCode) {
+        setIsValidatingAddress(true);
+        try {
+          const response = await fetch("/api/check-delivery", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ address, city, postalCode }),
+          });
+
+          const result: DeliveryResponse = await response.json();
+
+          setDeliveryInfo({
+            isValid: result.isDeliveryAvailable,
+            fee: result.deliveryFee || null,
+            message: result.message,
+            status: result.isDeliveryAvailable
+              ? result.deliveryFee === 0
+                ? "success"
+                : "warning"
+              : "error",
+          });
+        } catch (error) {
+          setDeliveryInfo({
+            isValid: false,
+            fee: null,
+            message: "Fehler bei der Überprüfung der Lieferadresse.",
+            status: "error",
+          });
+        } finally {
+          setIsValidatingAddress(false);
+        }
+      }
+    };
+
+    const debounceTimer = setTimeout(validateDelivery, 1000);
+    return () => clearTimeout(debounceTimer);
+  }, [address, city, postalCode]);
+
   const handleFormSubmit = async (data: CheckoutFormData) => {
+    if (!deliveryInfo?.isValid) {
+      toast.error("Bitte geben Sie eine gültige Lieferadresse ein.");
+      return;
+    }
+
     const loadingToast = toast.loading(
       "Bitte warten Sie, während Ihre Bestellung bestätigt wird. Dies kann einen Moment dauern..."
     );
     try {
-      await onSubmit(data);
+      await onSubmit({
+        ...data,
+        deliveryFee: deliveryInfo.fee || 0,
+      });
     } finally {
       toast.dismiss(loadingToast);
     }
@@ -138,13 +211,47 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
                     rules={{ required: "PLZ ist erforderlich" }}
                   />
                 </div>
+
+                {/* Delivery Information Display */}
+                {isValidatingAddress && (
+                  <div className="flex items-center justify-center text-gray-500 mt-4">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    <span>Überprüfe Lieferadresse...</span>
+                  </div>
+                )}
+
+                {deliveryInfo && (
+                  <div
+                    className={`p-4 rounded-lg mt-4 ${
+                      deliveryInfo.status === "success"
+                        ? "bg-green-100 border-green-200 text-green-700"
+                        : deliveryInfo.status === "warning"
+                        ? "bg-green-100 border-green-200 text-green-700"
+                        : "bg-red-50 border-red-200 text-red-700"
+                    } border`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="flex-1">{deliveryInfo.message}</span>
+                      {/* Only show fee for 5-20km range */}
+                      {deliveryInfo.isValid && deliveryInfo.fee === 15 && (
+                        <span className="font-bold ml-4 whitespace-nowrap text-green-700 text-xl">
+                          15€
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-6">
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full h-12 text-lg bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                  disabled={
+                    isSubmitting ||
+                    isValidatingAddress ||
+                    !deliveryInfo?.isValid
+                  }
+                  className="w-full h-12 text-lg bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
