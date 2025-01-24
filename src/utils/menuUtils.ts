@@ -1,8 +1,8 @@
 import { MENU_CONTENTS, PACKAGES } from "@/constants/categories";
 
-export const getPackageMenuId = (packageName: string): string | null => {
+export const getPackageMenuId = (packageName: string): string | undefined => {
     const pkg = PACKAGES.find(p => p.name === packageName);
-    return pkg ? pkg.id.toString() : null;
+    return pkg ? pkg.id.toString() : undefined;
 };
 
 export const getMenuContents = (menuId: string | number): any[] => {

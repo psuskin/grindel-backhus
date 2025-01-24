@@ -7,7 +7,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         console.log('Received order data:', JSON.stringify(body, null, 2));
 
-        const { customerInfo, cartData } = body;
+        const { customerInfo, cartData, deliveryFee } = body;
 
         if (!cartData?.cart?.order) {
             throw new Error('Invalid cart data structure');
@@ -31,10 +31,13 @@ export async function POST(req: Request) {
         console.log('Formatted order data:', JSON.stringify(orderData, null, 2));
 
         try {
-            // Generate PDF
+            // Generate PDF with delivery fee
             const doc = await generateOrderPDF({
                 orderData,
-                customerInfo,
+                customerInfo: {
+                    ...customerInfo,
+                    deliveryFee: deliveryFee
+                },
                 orderNumber
             });
 
